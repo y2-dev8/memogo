@@ -4,16 +4,16 @@ import { auth, db } from '@/firebase/firebaseConfig';
 import { collection, query, where, getDocs, addDoc, deleteDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
-import { Heading, Text, Spinner, Avatar, Image, useToast } from '@chakra-ui/react';
 import Head from 'next/head';
-import { FiTwitter } from 'react-icons/fi';
-import { Button, Empty } from "antd"
+import { Button, Empty, message, Spin, Image, Typography, List, Card } from "antd";
+import { Avatar } from "@chakra-ui/react"
+
+const { Title, Text } = Typography;
 
 interface User {
     photoURL: string;
     displayName: string;
     bio: string;
-    twitter?: string;
     headerPhotoURL?: string;
     userID: string;
 }
@@ -36,7 +36,6 @@ const UserPage = () => {
     const [followerCount, setFollowerCount] = useState<number>(0);
     const currentUser = auth.currentUser;
     const [isCurrentUser, setIsCurrentUser] = useState<boolean>(false);
-    const toast = useToast();
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -54,13 +53,7 @@ const UserPage = () => {
                     }
                 } catch (err) {
                     setError('ユーザーデータの取得に失敗しました。');
-                    toast({
-                        title: 'エラー',
-                        description: 'ユーザーデータの取得に失敗しました。',
-                        status: 'error',
-                        duration: 5000,
-                        isClosable: true,
-                    });
+                    message.error('ユーザーデータの取得に失敗しました。');
                     console.error(err);
                 }
             }
@@ -75,13 +68,7 @@ const UserPage = () => {
                 }
             } catch (err) {
                 setError('メモの取得に失敗しました。');
-                toast({
-                    title: 'エラー',
-                    description: 'メモの取得に失敗しました。',
-                    status: 'error',
-                    duration: 5000,
-                    isClosable: true,
-                });
+                message.error('メモの取得に失敗しました。');
                 console.error(err);
             }
         };
@@ -94,13 +81,7 @@ const UserPage = () => {
                     if (!followSnapshot.empty) setIsFollowing(true);
                 } catch (err) {
                     setError('フォロー状態の確認に失敗しました。');
-                    toast({
-                        title: 'エラー',
-                        description: 'フォロー状態の確認に失敗しました。',
-                        status: 'error',
-                        duration: 5000,
-                        isClosable: true,
-                    });
+                    message.error('フォロー状態の確認に失敗しました。');
                     console.error(err);
                 }
             }
@@ -114,13 +95,7 @@ const UserPage = () => {
                     setFollowerCount(querySnapshot.size);
                 } catch (err) {
                     setError('フォロワー数の取得に失敗しました。');
-                    toast({
-                        title: 'エラー',
-                        description: 'フォロワー数の取得に失敗しました。',
-                        status: 'error',
-                        duration: 5000,
-                        isClosable: true,
-                    });
+                    message.error('フォロワー数の取得に失敗しました。');
                     console.error(err);
                 }
             }
@@ -135,7 +110,7 @@ const UserPage = () => {
         };
 
         fetchData();
-    }, [userId, currentUser, toast]);
+    }, [userId, currentUser]);
 
     const handleFollow = async () => {
         if (currentUser && userId && typeof userId === 'string') {
@@ -145,22 +120,11 @@ const UserPage = () => {
                     followingId: userId
                 });
                 setIsFollowing(true);
-                setFollowerCount(prev => prev + 1); // Increase follower count locally
-                toast({
-                    title: 'フォローしました。',
-                    status: 'success',
-                    duration: 5000,
-                    isClosable: true,
-                });
+                setFollowerCount(prev => prev + 1);
+                message.success('フォローしました。');
             } catch (err) {
                 setError('フォローに失敗しました。');
-                toast({
-                    title: 'エラー',
-                    description: 'フォローに失敗しました。',
-                    status: 'error',
-                    duration: 5000,
-                    isClosable: true,
-                });
+                message.error('フォローに失敗しました。');
                 console.error(err);
             }
         }
@@ -175,28 +139,17 @@ const UserPage = () => {
                     await deleteDoc(doc.ref);
                 });
                 setIsFollowing(false);
-                setFollowerCount(prev => prev - 1); // Decrease follower count locally
-                toast({
-                    title: 'フォロー解除しました。',
-                    status: 'success',
-                    duration: 5000,
-                    isClosable: true,
-                });
+                setFollowerCount(prev => prev - 1);
+                message.success('フォロー解除しました。');
             } catch (err) {
                 setError('フォロー解除に失敗しました。');
-                toast({
-                    title: 'エラー',
-                    description: 'フォロー解除に失敗しました。',
-                    status: 'error',
-                    duration: 5000,
-                    isClosable: true,
-                });
+                message.error('フォロー解除に失敗しました。');
                 console.error(err);
             }
         }
     };
 
-    if (loading) return <div className="w-full min-h-screen flex justify-center items-center h-screen"><Spinner size="xl" /></div>;
+    if (loading) return <div className="w-full min-h-screen flex justify-center items-center h-screen"><Spin size="large" /></div>;
     if (error) return <div className="text-red-500">{error}</div>;
     if (!user) return <div>ユーザーが見つかりませんでした。</div>;
 
@@ -205,30 +158,30 @@ const UserPage = () => {
             <Head><title>{user.displayName}</title></Head>
             <Layout>
                 {user.headerPhotoURL && (
-                    <div className="rounded-md overflow-hidden border mb-5">
-                        <Image src={user.headerPhotoURL} className="w-full h-auto"  />
+                    <div className="mb-5">
+                        <Image src={user.headerPhotoURL} className="w-full h-auto" />
                     </div>
                 )}
                 <div className="contents lg:flex items-center">
                     <Avatar src={user.photoURL} name={user.displayName} size="lg" />
                     <div className='mt-3 lg:mt-0 lg:ml-3 w-full'>
-                        <div className="flex items-center w-full">
+                        <div className="flex items-center">
                             <div>
-                                <Heading size="md">{user.displayName}</Heading>
-                                <Text className="text-slate-500 lg:whitespace-pre-line">{user.bio}</Text>
+                                <p className="text-lg font-bold">{user.displayName}</p>
+                                <p className="text-sm text-slate-500 lg:whitespace-pre-line">{user.bio}</p>
                             </div>
                             <div className="ml-auto">
                                 {!isCurrentUser && (
                                     <Button
                                         onClick={isFollowing ? handleUnfollow : handleFollow}
-                                        className="lg:ml-3"
-                                        type={`${isFollowing ? 'default' : "primary"}`}
+                                        className="ml-3"
+                                        type={isFollowing ? 'default' : "primary"}
                                     >
                                         {isFollowing ? 'Unfollow' : 'Follow'}
                                     </Button>
                                 )}
                                 {isCurrentUser && (
-                                    <Button className='lg:ml-3' type="default">
+                                    <Button className='ml-3' type="default">
                                         <Link href="/settings">Edit profile</Link>
                                     </Button>
                                 )}
@@ -236,32 +189,28 @@ const UserPage = () => {
                         </div>
                     </div>
                 </div>
-                <Text className="text-slate-500 mt-3 text-sm">{followerCount} Followers</Text>
-                {user.twitter && (
-                    <div className="flex items-center mt-3">
-                        <FiTwitter className='mr-1 text-lg' />
-                        <Link href={`https://twitter.com/${user.twitter}`} target="_blank" rel="noopener noreferrer">
-                            @{user.twitter}
-                        </Link>
-                    </div>
-                )}
+                <p className="text-slate-500 mt-3 text-sm">{followerCount} Followers</p>
                 <div className="mt-[30px]">
-                    <ul className="space-y-3">
-                        {memos.length > 0 ? (
-                            memos.map((memo) => (
-                                <li key={memo.uid} className="p-[15px] border rounded-md hover:bg-slate-50 transition-colors">
-                                    <Link href={`/memo?id=${memo.uid}`}>
-                                        <h2 className="text-lg font-bold">{memo.title}</h2>
-                                        <p>{memo.description.length > 100 ? `${memo.description.substring(0, 100)}...` : memo.description}</p>
-                                    </Link>
-                                </li>
-                            ))
-                        ) : (
-                            <div className="w-full flex justify-center">
-                                <Empty description="No memos found for this user." />
-                            </div>
+                    <List
+                        grid={{ gutter: 16, column: 1 }}
+                        dataSource={memos}
+                        renderItem={memo => (
+                            <List.Item>
+                                <Link href={`/memo?id=${memo.uid}`}>
+                                    <Card title={memo.title}>
+                                        <Card.Meta
+                                            description={memo.description.length > 100 ? `${memo.description.substring(0, 100)}...` : memo.description}
+                                        />
+                                    </Card>
+                                </Link>
+                            </List.Item>
                         )}
-                    </ul>
+                    />
+                    {memos.length === 0 && (
+                        <div className="w-full flex justify-center">
+                            <Empty description="No memos found for this user." />
+                        </div>
+                    )}
                 </div>
             </Layout>
         </div>

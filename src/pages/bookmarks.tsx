@@ -5,8 +5,10 @@ import { onAuthStateChanged } from 'firebase/auth';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
 import Head from 'next/head';
-import { Heading, Spinner, Text } from '@chakra-ui/react';
+import { Typography, Spin, List, Card, Empty } from 'antd';
 import useAuthRedirect from '@/hooks/useAuthRedirect';
+
+const { Title, Text } = Typography;
 
 interface Memo {
     title: string;
@@ -19,37 +21,40 @@ const BookmarkedMemos = () => {
     const [memos, setMemos] = useState<Memo[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchBookmarkedMemos = async (userId: string) => {
-            const q = query(collection(db, 'bookmarks'), where('userId', '==', userId));
-            const querySnapshot = await getDocs(q);
-            const bookmarkedMemos: Memo[] = [];
+    const fetchBookmarkedMemos = async (userId: string) => {
+        const q = query(collection(db, 'bookmarks'), where('userId', '==', userId));
+        const querySnapshot = await getDocs(q);
+        const bookmarkedMemos: Memo[] = [];
 
-            for (let bookmarkDoc of querySnapshot.docs) {
-                const memoId = bookmarkDoc.data().memoId;
-                const memoDocRef = doc(db, 'memos', memoId);
-                const memoDoc = await getDoc(memoDocRef);
-                if (memoDoc.exists()) {
-                    const memoData = memoDoc.data() as Memo;
-                    memoData.uid = memoId;
-                    bookmarkedMemos.push(memoData);
-                }
+        for (let bookmarkDoc of querySnapshot.docs) {
+            const memoId = bookmarkDoc.data().memoId;
+            const memoDocRef = doc(db, 'memos', memoId);
+            const memoDoc = await getDoc(memoDocRef);
+            if (memoDoc.exists()) {
+                const memoData = memoDoc.data() as Memo;
+                memoData.uid = memoId;
+                bookmarkedMemos.push(memoData);
             }
+        }
 
-            setMemos(bookmarkedMemos);
-            setLoading(false);
-        };
+        setMemos(bookmarkedMemos);
+        setLoading(false);
+    };
 
-        onAuthStateChanged(auth, (user) => {
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
+                setLoading(true);
                 fetchBookmarkedMemos(user.uid);
             } else {
                 setLoading(false);
             }
         });
+
+        return () => unsubscribe();
     }, []);
 
-    if (loading) return <div className="w-full min-h-screen flex justify-center items-center"><Spinner size="xl" /></div>;
+    if (loading) return <div className="w-full min-h-screen flex justify-center items-center"><Spin /></div>;
 
     return (
         <div className="container mx-auto my-10">
@@ -57,23 +62,27 @@ const BookmarkedMemos = () => {
                 <title>Bookmarks</title>
             </Head>
             <Layout>
-                <Heading size="md" className='mb-5'>ブックマーク</Heading>
-                <ul className="space-y-3">
-                    {memos.length > 0 ? (
-                        memos.map((memo, index) => (
-                            <li key={memo.uid} className="p-[15px] border rounded-md hover:bg-slate-50 transition-colors">
+                {memos.length === 0 ? (
+                    <div className="w-full flex justify-center">
+                        <Empty description="No bookmarked memos found." />
+                    </div>
+                ) : (
+                    <List
+                        grid={{ gutter: 16, column: 1 }}
+                        dataSource={memos}
+                        renderItem={memo => (
+                            <List.Item>
                                 <Link href={`/memo?id=${memo.uid}`}>
-                                    <h2 className="text-lg font-bold">{memo.title}</h2>
-                                    <p>{memo.description.length > 100 ? `${memo.description.substring(0, 100)}...` : memo.description}</p>
+                                    <Card title={memo.title}>
+                                        <Card.Meta
+                                            description={memo.description.length > 100 ? `${memo.description.substring(0, 100)}...` : memo.description}
+                                        />
+                                    </Card>
                                 </Link>
-                            </li>
-                        ))
-                    ) : (
-                        <div className="w-full flex justify-center">
-                            <Text className="text-slate-500 mb-5">ブックマークしたメモが見つかりませんでした。</Text>
-                        </div>
-                    )}
-                </ul>
+                            </List.Item>
+                        )}
+                    />
+                )}
             </Layout>
         </div>
     );

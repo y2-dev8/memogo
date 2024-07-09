@@ -4,7 +4,7 @@ import { db, auth, storage } from '@/firebase/firebaseConfig';
 import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { deleteUser, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { Text, Image, Spinner, Avatar, Heading, useDisclosure } from '@chakra-ui/react';
+import { Image, Avatar, useDisclosure } from '@chakra-ui/react';
 import Layout from '@/components/Layout';
 import useAuthRedirect from '@/hooks/useAuthRedirect';
 import Head from 'next/head';
@@ -12,10 +12,9 @@ import getCroppedImg from "@/utils/cropImage";
 import FileInput from '@/components/settings/FileInput';
 import CropModal from '@/components/settings/CropModal';
 import DeleteAccountDialog from '@/components/settings/DeleteAccountDialog';
-import { Form, Input, Button, Empty, Typography, message, Card, Row, Col } from "antd";
+import { Form, Input, Button, Empty, message, Card, Row, Col, Spin } from "antd";
 
 const { TextArea } = Input;
-const { Title } = Typography;
 
 const Settings = () => {
     useAuthRedirect();
@@ -200,7 +199,7 @@ const Settings = () => {
         }
     };
 
-    if (loading) return <div className="w-full min-h-screen flex justify-center items-center"><Spinner size="xl" /></div>;
+    if (loading) return <div className="w-full min-h-screen flex justify-center items-center"><Spin /></div>;
 
     return (
         <div className="container mx-auto my-10">
