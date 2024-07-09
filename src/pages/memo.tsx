@@ -19,7 +19,7 @@ import {
     Spinner,
     Box
 } from '@chakra-ui/react';
-import { Menu, Dropdown, Button, Modal, Input, message } from 'antd';
+import { Menu, Dropdown, Button, Modal, Input, message, Spin } from 'antd';
 import Layout from '@/components/Layout';
 import { onAuthStateChanged } from 'firebase/auth';
 import Link from 'next/link';
@@ -181,7 +181,7 @@ const Memo = () => {
         </Menu>
     );
 
-    if (loading) return <div className="w-full min-h-screen flex justify-center items-center"><Spinner size="xl" /></div>;
+    if (loading) return <div className="w-full min-h-screen flex justify-center items-center"><Spin size="large" /></div>;
 
     return (
         <>

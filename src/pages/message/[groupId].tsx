@@ -79,7 +79,7 @@ const GroupChat = () => {
     }
 
     return (
-        <div className='container mx-auto my-10'>
+        <div className='w-[90%] mx-auto my-10'>
             <Head>
                 <title>Message</title>
             </Head>

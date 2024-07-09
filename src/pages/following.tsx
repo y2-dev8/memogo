@@ -2,118 +2,115 @@ import { useState, useEffect } from 'react';
 import { auth, db } from '@/firebase/firebaseConfig';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import Link from 'next/link';
-import { Heading, Text, Avatar, Box, VStack, HStack, Spinner, useToast } from '@chakra-ui/react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { Spin, List, Card, message, Empty } from 'antd';
 import Head from 'next/head';
 import Layout from '@/components/Layout';
 import useAuthRedirect from '@/hooks/useAuthRedirect';
+import { Avatar, Flex } from "@chakra-ui/react";
 
 interface User {
     uid: string;
     photoURL: string;
     displayName: string;
     bio: string;
-    userID: string; // Add this field
+    userID: string;
 }
 
 const Following = () => {
     useAuthRedirect();
     const [following, setFollowing] = useState<User[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
-    const toast = useToast();
     const currentUser = auth.currentUser;
 
-    useEffect(() => {
-        const fetchFollowing = async () => {
-            if (currentUser) {
-                try {
-                    console.log("Current user UID:", currentUser.uid);
-                    const followsQuery = query(collection(db, 'follows'), where('followerId', '==', currentUser.uid));
-                    const followsSnapshot = await getDocs(followsQuery);
-                    console.log("Follows snapshot size:", followsSnapshot.size);
-                    const followedUsers: User[] = [];
+    const fetchFollowing = async (userId: string) => {
+        try {
+            const followsQuery = query(collection(db, 'follows'), where('followerId', '==', userId));
+            const followsSnapshot = await getDocs(followsQuery);
+            const followedUsers: User[] = [];
 
-                    for (const docSnap of followsSnapshot.docs) {
-                        const followingId = docSnap.data().followingId;
-                        console.log("Following ID:", followingId);
+            for (const docSnap of followsSnapshot.docs) {
+                const followingId = docSnap.data().followingId;
+                const userDocRef = doc(db, 'users', followingId);
+                const userDoc = await getDoc(userDocRef);
 
-                        // Try to get the user document by followingId
-                        const userDocRef = doc(db, 'users', followingId);
-                        const userDoc = await getDoc(userDocRef);
+                if (!userDoc.exists()) {
+                    const userQuery = query(collection(db, 'users'), where('userID', '==', followingId));
+                    const userQuerySnapshot = await getDocs(userQuery);
 
-                        if (!userDoc.exists()) {
-                            // If the document does not exist, search for the user by userID field
-                            const userQuery = query(collection(db, 'users'), where('userID', '==', followingId));
-                            const userQuerySnapshot = await getDocs(userQuery);
-
-                            if (!userQuerySnapshot.empty) {
-                                userQuerySnapshot.forEach((userDoc) => {
-                                    const userData = userDoc.data() as User;
-                                    followedUsers.push({ ...userData, uid: userDoc.id });
-                                    console.log("Fetched user data:", userData);
-                                });
-                            } else {
-                                console.log("User document does not exist for ID:", followingId);
-                            }
-                        } else {
+                    if (!userQuerySnapshot.empty) {
+                        userQuerySnapshot.forEach((userDoc) => {
                             const userData = userDoc.data() as User;
                             followedUsers.push({ ...userData, uid: userDoc.id });
-                            console.log("Fetched user data:", userData);
-                        }
+                        });
                     }
-
-                    setFollowing(followedUsers);
-                } catch (error) {
-                    console.error('Error fetching following users:', error);
-                    toast({
-                        title: 'エラー',
-                        description: 'フォローしているユーザーの取得中にエラーが発生しました。',
-                        status: 'error',
-                        duration: 5000,
-                        isClosable: true,
-                    });
-                } finally {
-                    setLoading(false);
+                } else {
+                    const userData = userDoc.data() as User;
+                    followedUsers.push({ ...userData, uid: userDoc.id });
                 }
             }
-        };
 
-        fetchFollowing();
-    }, [currentUser, toast]);
+            setFollowing(followedUsers);
+        } catch (error) {
+            console.error('Error fetching following users:', error);
+            message.error('フォローしているユーザーの取得中にエラーが発生しました。');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                setLoading(true);
+                fetchFollowing(user.uid);
+            } else {
+                setLoading(false);
+            }
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     if (loading) {
-        return <div className="w-full min-h-screen flex justify-center items-center"><Spinner size="xl" /></div>;
+        return <div className="w-full min-h-screen flex justify-center items-center"><Spin size="large" /></div>;
     }
 
     return (
         <div className="container mx-auto my-10">
             <Head>
-                <title>フォロー中</title>
+                <title>Following</title>
             </Head>
             <Layout>
-                <Heading size="md" className="mb-5">フォロー中</Heading>
-                <VStack align="start" className="space-y-3">
-                    {following.length > 0 ? (
-                        following.map((user) => (
-                            <Box key={user.uid} className="p-3 w-full rounded-md border">
-                                <HStack align="center">
-                                    <Link href={`/${user.userID}`} passHref>
-                                        <Avatar src={user.photoURL} name={user.displayName} size="md" className="mr-1.5" />
-                                    </Link>
-                                    <VStack align="start" spacing={0}>
-                                        <Link href={`/${user.userID}`} passHref>
-                                            <Text fontWeight="bold">{user.displayName}</Text>
-                                        </Link>
-                                        <Text>{user.bio}</Text>
-                                    </VStack>
-                                </HStack>
-                            </Box>
-                        ))
-                    ) : (
-                        <div className="w-full flex justify-center">
-                            <Text className="text-slate-500 mb-5">フォローしているユーザーが見つかりませんでした。</Text>
-                        </div>
-                    )}
-                </VStack>
+                {following.length > 0 ? (
+                    <List
+                        grid={{ gutter: 16, column: 1 }}
+                        dataSource={following}
+                        renderItem={user => (
+                            <List.Item style={{ borderBottom: "none" }}>
+                                <Card
+                                    title={
+                                        <Flex align="center">
+                                            <Link href={`/${user.userID}`} passHref>
+                                                <Avatar src={user.photoURL} size="sm" name={user.displayName} className="mr-3" />
+                                            </Link>
+                                            <Link href={`/${user.userID}`} className="hover:text-black font-bold text-md" passHref>
+                                                {user.displayName}
+                                            </Link>
+                                        </Flex>
+                                    }
+                                    className="w-full"
+                                >
+                                    <p className="text-sm text-gray-500">{user.bio}</p>
+                                </Card>
+                            </List.Item>
+                        )}
+                    />
+                ) : (
+                    <div className="w-full flex justify-center">
+                        <Empty description="No followed users found." />
+                    </div>
+                )}
             </Layout>
         </div>
     );

@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { auth, db, storage } from '@/firebase/firebaseConfig';
-import { collection, addDoc, query, orderBy, onSnapshot, getDoc } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { Button, Text, VStack, HStack, Link, useToast, Avatar, Spinner } from '@chakra-ui/react';
+import { Text, VStack, HStack, Link, Avatar } from '@chakra-ui/react';
 import { FaUpload } from 'react-icons/fa';
 import NextLink from 'next/link';
 import { format } from 'date-fns';
-import { Empty, Input } from "antd"
+import { Empty, Input, Button, Upload, message } from "antd";
+import { UploadOutlined } from '@ant-design/icons';
 
 interface Message {
     id: string;
@@ -25,20 +26,20 @@ interface ChatComponentProps {
 }
 
 const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, userIDs }) => {
-    const [message, setMessage] = useState<string>('');
+    const [messageText, setMessageText] = useState<string>('');
     const [messages, setMessages] = useState<Message[]>([]);
     const [file, setFile] = useState<File | null>(null);
+    const [fileURL, setFileURL] = useState<string>('');
     const [isSending, setIsSending] = useState<boolean>(false);
-    const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const [isUploading, setIsUploading] = useState<boolean>(false);
     const chatContainerRef = useRef<HTMLDivElement | null>(null);
-    const toast = useToast();
 
     useEffect(() => {
         if (!groupId) return;
 
         const messagesRef = collection(db, 'groupChat', groupId, 'messages');
         const q = query(messagesRef, orderBy('timestamp', 'asc'));
-        const unsubscribe = onSnapshot(q, async (snapshot) => {
+        const unsubscribe = onSnapshot(q, (snapshot) => {
             const msgs = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
@@ -65,30 +66,17 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
     };
 
     const handleSendMessage = async () => {
-        if (!message && !file) {
-            toast({
-                title: 'エラー',
-                description: 'メッセージもしくは画像が必要です。',
-                status: 'error',
-                duration: 5000,
-                isClosable: true,
-            });
+        if (!messageText && !fileURL) {
+            message.error('メッセージもしくはファイルが必要です。');
             return;
         }
 
         setIsSending(true);
 
         const messagesRef = collection(db, 'groupChat', groupId, 'messages');
-        let fileURL = '';
-
-        if (file) {
-            const storageRef = ref(storage, `groupChat/${groupId}/messages/${file.name}`);
-            await uploadBytes(storageRef, file);
-            fileURL = await getDownloadURL(storageRef);
-        }
 
         await addDoc(messagesRef, {
-            message,
+            message: messageText,
             fileURL,
             sender: auth.currentUser?.uid,
             senderName: currentUser?.displayName || '匿名',
@@ -96,14 +84,26 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
             timestamp: new Date()
         });
 
-        setMessage('');
+        setMessageText('');
         setFile(null);
+        setFileURL('');
         setIsSending(false);
+    };
+
+    const handleBeforeUpload = async (file: File) => {
+        setIsUploading(true);
+        const storageRef = ref(storage, `groupChat/${groupId}/messages/${file.name}`);
+        await uploadBytes(storageRef, file);
+        const fileURL = await getDownloadURL(storageRef);
+        setFile(file);
+        setFileURL(fileURL);
+        setIsUploading(false);
+        return false;
     };
 
     return (
         <div className="w-full">
-            <VStack align="stretch" className="space-y-1 mb-5 pb-[50px] md:pb-0 h-[75vh] overflow-y-auto" ref={chatContainerRef}>
+            <VStack align="stretch" className="space-y-1 mb-5 pb-[50px] md:pb-0 h-[80vh] overflow-y-auto" ref={chatContainerRef}>
                 {messages.length === 0 ? (
                     <div className="w-full h-full flex items-center justify-center">
                         <Empty description="No chat yet." />
@@ -137,37 +137,27 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
                     ))
                 )}
             </VStack>
-            <div className="fixed w-full left-0 md:sticky bottom-0 p-3 bg-white border md:rounded-md md:shadow-sm space-y-3 md:space-y-0 md:space-x-3 md:flex">
+            <div className="w-full space-y-3 md:space-y-0 md:space-x-3 md:flex">
                 <Input
                     type="text"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="メッセージを入力..."
+                    value={messageText}
+                    onChange={(e) => setMessageText(e.target.value)}
+                    placeholder="メッセージを入力"
                 />
                 <div className="flex space-x-3">
-                    <Button
-                        leftIcon={<FaUpload />}
-                        onClick={() => fileInputRef.current?.click()}
-                        variant="outline"
-                        className="w-full md:w-auto"
-                    >
-                        {file ? 'アップロード済み' : 'アップロード'}
-                    </Button>
+                    <Upload beforeUpload={handleBeforeUpload} showUploadList={false}>
+                        <Button icon={<UploadOutlined />} type="dashed" loading={isUploading}>
+                            {file ? 'アップロード済み' : 'アップロード'}
+                        </Button>
+                    </Upload>
                     <Button
                         onClick={handleSendMessage}
-                        colorScheme="teal"
-                        className="w-full md:w-auto"
-                        isDisabled={isSending}
+                        type="primary"
+                        loading={isSending}
                     >
-                        {isSending ? <Spinner size="sm" /> : '送信'}
+                        送信する
                     </Button>
                 </div>
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
-                    className="hidden"
-                />
             </div>
         </div>
     );

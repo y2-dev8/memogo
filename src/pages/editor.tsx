@@ -6,37 +6,25 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { v4 as uuidv4 } from 'uuid';
 import {
-    Button,
     Input,
-    Textarea,
-    useClipboard,
-    useToast,
-    Spinner,
-    Tabs,
-    TabList,
-    Tab,
-    TabPanels,
-    TabPanel,
-    AlertDialog,
-    AlertDialogBody,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogContent,
-    AlertDialogOverlay,
     Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
-    ModalCloseButton,
-    ModalBody,
-    ModalFooter,
-    Text
-} from '@chakra-ui/react';
+    Button,
+    Tabs,
+    message,
+    Spin,
+    Radio,
+    Row,
+    Col,
+    RadioChangeEvent,
+} from 'antd';
 import { onAuthStateChanged } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Layout from '@/components/Layout';
 import Head from 'next/head';
 import useAuthRedirect from '@/hooks/useAuthRedirect';
+
+const { TextArea } = Input;
+const { TabPane } = Tabs;
 
 const Editor = () => {
     useAuthRedirect();
@@ -45,24 +33,13 @@ const Editor = () => {
     const [description, setDescription] = useState<string>('');
     const [userId, setUserId] = useState<string | null>(null);
     const [imageUrl, setImageUrl] = useState<string>('');
-    const { onCopy, hasCopied } = useClipboard(imageUrl);
     const [isUploading, setIsUploading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [loading, setLoading] = useState(true);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
-    const toast = useToast();
     const [isAlertOpen, setIsAlertOpen] = useState(false);
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-    const cancelRef = useRef<HTMLButtonElement>(null);
-
-    const showToast = (title: string, status: "success" | "error") => {
-        toast({
-            title,
-            status,
-            duration: 5000,
-            isClosable: true,
-        });
-    };
+    const [visibility, setVisibility] = useState<string>('public');
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -79,7 +56,7 @@ const Editor = () => {
 
     const saveMemo = async () => {
         if (!userId) {
-            showToast("ログインしてください。", "error");
+            message.error("ログインしてください。");
             return;
         }
 
@@ -91,17 +68,19 @@ const Editor = () => {
                 description,
                 content,
                 imageUrl,
+                visibility,
                 createdAt: new Date(),
             });
-            showToast("メモが保存されました!", "success");
+            message.success("メモが保存されました。");
             setTitle('');
             setDescription('');
             setContent('');
             setImageUrl('');
+            setVisibility('public');
             setIsAlertOpen(false);
         } catch (e) {
             if (e instanceof FirebaseError) {
-                showToast("メモの保存中にエラーが発生しました。", "error");
+                message.error("メモの保存中にエラーが発生しました。");
             }
         } finally {
             setIsSaving(false);
@@ -125,17 +104,22 @@ const Editor = () => {
             const image = e.target.files[0];
             const imageRef = ref(storage, `images/${uuidv4()}`);
             setIsUploading(true);
-            await uploadBytes(imageRef, image);
-            const url = await getDownloadURL(imageRef);
-            setImageUrl(url);
-            setIsUploading(false);
-            setIsImageModalOpen(true);
+            try {
+                await uploadBytes(imageRef, image);
+                const url = await getDownloadURL(imageRef);
+                setImageUrl(url);
+                setIsImageModalOpen(true);
+            } catch (error) {
+                message.error("画像のアップロードに失敗しました。");
+            } finally {
+                setIsUploading(false);
+            }
         }
     };
 
     const handlePublishClick = () => {
         if (!title || !description || !content) {
-            showToast("タイトル、説明欄、メモの中身が空欄です。", "error");
+            message.error("タイトル、説明欄、メモの中身が空欄です。");
         } else {
             setIsAlertOpen(true);
         }
@@ -145,15 +129,19 @@ const Editor = () => {
         setIsAlertOpen(false);
     };
 
-    const openFileDialog = () => {
-        fileInputRef.current?.click();
-    };
-
     const onCloseImageModal = () => {
         setIsImageModalOpen(false);
     };
 
-    if (loading) return <div className="w-full min-h-screen flex justify-center items-center"><Spinner size="xl" /></div>;
+    const openFileDialog = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleVisibilityChange = (e: RadioChangeEvent) => {
+        setVisibility(e.target.value);
+    };
+
+    if (loading) return <div className="w-full min-h-screen flex justify-center items-center"><Spin size="large" /></div>;
 
     return (
         <div className="container mx-auto my-10">
@@ -161,111 +149,96 @@ const Editor = () => {
                 <title>Editor</title>
             </Head>
             <Layout>
-                <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    ref={fileInputRef}
-                    className="hidden"
-                />
-                <h1 className="top-emoji">🥨</h1>
-                <input
-                    type="text"
-                    value={title}
-                    onChange={handleTitleChange}
-                    className="input-title"
-                    placeholder="タイトルを入力..."
-                />
-                <input
-                    value={description}
-                    onChange={handleDescriptionChange}
-                    className="input-description"
-                    placeholder="説明を入力..."
-                />
-                <Tabs variant='soft-rounded' colorScheme='blue' size="sm">
-                    <div className="flex items-center">
-                        <TabList>
-                            <Tab>マークダウン</Tab>
-                            <Tab>プレビュー</Tab>
-                        </TabList>
-                    </div>
-                    <TabPanels>
-                        <TabPanel padding="15px 0">
-                            <div className="space-y-3">
-                                <textarea
-                                    value={content}
-                                    onChange={handleContentChange}
-                                    placeholder="メモの内容を入力..."
-                                    className="markdown"
-                                />
-                                <Button onClick={openFileDialog} className="w-full" disabled={isUploading} variant="outline">
-                                    {isUploading ? <><Spinner size="sm" className="mr-2.5" />アップロード中...</> : '画像をアップロード'}
-                                </Button>
-                            </div>
-                        </TabPanel>
-                        <TabPanel padding="15px 0">
-                            <div className="markdown-body markdown">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                    {content}
-                                </ReactMarkdown>
-                            </div>
-                        </TabPanel>
-                    </TabPanels>
-                </Tabs>
-                <div className="w-auto flex">
-                    <button onClick={handlePublishClick} disabled={isSaving} className="w-full blue-button">
-                        {isSaving ? <Spinner size="sm" /> : '投稿する'}
-                    </button>
-                </div>
+                <Row gutter={[16, 16]}>
+                    <Col span={24}>
+                        <Input
+                            type="text"
+                            value={title}
+                            onChange={handleTitleChange}
+                            placeholder="タイトルを入力"
+                        />
+                    </Col>
+                    <Col span={24}>
+                        <Input
+                            value={description}
+                            onChange={handleDescriptionChange}
+                            placeholder="説明を入力"
+                            className="mb-5"
+                        />
+                    </Col>
+                    <Col span={24}>
+                        <Radio.Group onChange={handleVisibilityChange} value={visibility}>
+                            <Radio value="public">Public</Radio>
+                            <Radio value="private">Private</Radio>
+                        </Radio.Group>
+                    </Col>
+                    <Col span={24}>
+                        <Tabs defaultActiveKey="1">
+                            <TabPane tab="マークダウン" key="1">
+                                <div className="space-y-3">
+                                    <TextArea
+                                        value={content}
+                                        onChange={handleContentChange}
+                                        placeholder="メモの内容を入力..."
+                                        className="markdown"
+                                        autoSize={{ minRows: 10, maxRows: 20 }}
+                                    />
+                                    <Button onClick={openFileDialog} className="w-full" loading={isUploading} type="dashed">
+                                        Upload Image
+                                    </Button>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                        ref={fileInputRef}
+                                        className="hidden"
+                                    />
+                                </div>
+                            </TabPane>
+                            <TabPane tab="プレビュー" key="2">
+                                <div className="markdown-body markdown">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {content}
+                                    </ReactMarkdown>
+                                </div>
+                            </TabPane>
+                        </Tabs>
+                    </Col>
+                    <Col span={24}>
+                        <Button onClick={handlePublishClick} className="w-full mt-5" type="primary">
+                            Publish
+                        </Button>
+                    </Col>
+                </Row>
             </Layout>
 
-            <AlertDialog
-                isOpen={isAlertOpen}
-                leastDestructiveRef={cancelRef}
-                onClose={onCloseAlert}
-                isCentered
+            <Modal
+                title="メモを投稿する"
+                visible={isAlertOpen}
+                onOk={saveMemo}
+                onCancel={onCloseAlert}
+                okButtonProps={{ loading: isSaving }}
+                okText="Publish"
+                centered
             >
-                <AlertDialogOverlay>
-                    <AlertDialogContent>
-                        <AlertDialogHeader fontSize="lg" fontWeight="bold">
-                            メモを投稿する
-                        </AlertDialogHeader>
+                <p>このメモを投稿しますか？</p>
+            </Modal>
 
-                        <AlertDialogBody>
-                            このメモを投稿してもよろしいですか？
-                        </AlertDialogBody>
-
-                        <AlertDialogFooter>
-                            <Button ref={cancelRef} onClick={onCloseAlert}>
-                                キャンセル
-                            </Button>
-                            <button className="ml-3 blue-button" onClick={saveMemo} disabled={isSaving}>
-                                {isSaving ? <Spinner size="sm" /> : '投稿する'}
-                            </button>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialogOverlay>
-            </AlertDialog>
-
-            <Modal isOpen={isImageModalOpen} onClose={onCloseImageModal} isCentered>
-                <ModalOverlay />
-                <ModalContent>
-                    <ModalHeader>アップロードされた画像</ModalHeader>
-                    <ModalCloseButton />
-                    <ModalBody>
-                        <div className="flex">
-                            <Input value={imageUrl} className="max-w-[70%]" isReadOnly/>
-                            <div className="ml-auto">
-                                <button onClick={onCopy} className="blue-button">
-                                    {hasCopied ? 'コピー済み' : 'コピーする'}
-                                </button>
-                            </div>
-                        </div>
-                    </ModalBody>
-                    <ModalFooter>
-                        <Text className="text-red-500 text-xs">URLの悪用は禁止されています。</Text>
-                    </ModalFooter>
-                </ModalContent>
+            <Modal
+                title="アップロードされた画像"
+                visible={isImageModalOpen}
+                onCancel={onCloseImageModal}
+                footer={null}
+                centered
+            >
+                <div className="flex">
+                    <Input value={imageUrl} readOnly className="mr-2.5" />
+                    <div className="ml-auto">
+                        <Button onClick={() => navigator.clipboard.writeText(imageUrl)} type="primary">
+                            Copy
+                        </Button>
+                    </div>
+                </div>
             </Modal>
         </div>
     );

@@ -199,7 +199,7 @@ const Settings = () => {
         }
     };
 
-    if (loading) return <div className="w-full min-h-screen flex justify-center items-center"><Spin /></div>;
+    if (loading) return <div className="w-full min-h-screen flex justify-center items-center"><Spin size="large" /></div>;
 
     return (
         <div className="container mx-auto my-10">

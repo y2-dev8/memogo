@@ -2,12 +2,12 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { auth, db } from '@/firebase/firebaseConfig';
 import { collection, addDoc, getDocs, query, where, updateDoc, doc, arrayUnion } from 'firebase/firestore';
-import { Input, Box, Text, VStack, useToast, useDisclosure, AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, Heading, Divider } from '@chakra-ui/react';
+import { Box, Text, VStack, useDisclosure, Heading, Divider, Avatar } from '@chakra-ui/react';
 import Layout from '@/components/Layout';
 import RoomList from '@/components/RoomList';
 import { FaPlus } from "react-icons/fa";
 import Head from 'next/head';
-import { Button } from "antd"
+import { Button, Modal, Input, message } from "antd";
 
 const GroupChatPage = () => {
     const [groupName, setGroupName] = useState('');
@@ -16,22 +16,30 @@ const GroupChatPage = () => {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const { isOpen: isCreateOpen, onOpen: onCreateOpen, onClose: onCreateClose } = useDisclosure();
     const cancelRef = useRef(null);
-    const toast = useToast();
     const router = useRouter();
 
+    const showMessage = (content: string, type: 'success' | 'error') => {
+        if (type === 'success') {
+            message.success(content);
+        } else {
+            message.error(content);
+        }
+    };
+
+    const isValidGroupID = (id: string) => /^[a-zA-Z0-9._-]+$/.test(id);
+
     const handleJoinGroup = async () => {
+        if (!isValidGroupID(joinGroupID)) {
+            showMessage('グループIDはアルファベット、数字、ハイフン、アンダースコア、ドットのみを使用できます。', 'error');
+            return;
+        }
+
         try {
             const groupIDQuery = query(collection(db, 'groupChat'), where('groupID', '==', joinGroupID));
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (groupIDSnapshot.empty) {
-                toast({
-                    title: 'エラー',
-                    description: 'グループIDが存在しません。',
-                    status: 'error',
-                    duration: 5000,
-                    isClosable: true,
-                });
+                showMessage('グループIDが存在しません。', 'error');
                 return;
             }
 
@@ -41,34 +49,22 @@ const GroupChatPage = () => {
             });
 
             onClose();
-            toast({
-                title: 'グループの参加に成功しました!',
-                status: 'success',
-                duration: 5000,
-                isClosable: true,
-            });
+            showMessage('グループの参加に成功しました。', 'success');
             router.push(`/message/${joinGroupID}`);
         } catch (error) {
-            toast({
-                title: 'エラー',
-                description: 'グループの参加に失敗しました。',
-                status: 'error',
-                duration: 5000,
-                isClosable: true,
-            });
+            showMessage('グループの参加に失敗しました。', 'error');
             console.error('Error joining group:', error);
         }
     };
 
     const handleCreateGroup = async () => {
         if (!groupName || !groupID) {
-            toast({
-                title: 'エラー',
-                description: 'グループの名前とIDは必須です。',
-                status: 'error',
-                duration: 5000,
-                isClosable: true,
-            });
+            showMessage('グループの名前とIDは必須です。', 'error');
+            return;
+        }
+
+        if (!isValidGroupID(groupID)) {
+            showMessage('グループIDはアルファベット、数字、ハイフン、アンダースコア、ドットのみを使用できます。', 'error');
             return;
         }
 
@@ -77,38 +73,21 @@ const GroupChatPage = () => {
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (!groupIDSnapshot.empty) {
-                toast({
-                    title: 'エラー',
-                    description: 'このグループIDは既に使われています。',
-                    status: 'error',
-                    duration: 5000,
-                    isClosable: true,
-                });
+                showMessage('このグループIDは既に使われています。', 'error');
                 return;
             }
 
-            const newGroupRef = await addDoc(collection(db, 'groupChat'), {
+            await addDoc(collection(db, 'groupChat'), {
                 groupName,
                 groupID,
                 participants: [auth.currentUser?.uid]
             });
 
             onCreateClose();
-            toast({
-                title: 'グループの作成に成功しました!',
-                status: 'success',
-                duration: 5000,
-                isClosable: true,
-            });
+            showMessage('グループの作成に成功しました。', 'success');
             router.push(`/message/${groupID}`);
         } catch (error) {
-            toast({
-                title: 'エラー',
-                description: 'グループの作成に失敗しました。',
-                status: 'error',
-                duration: 5000,
-                isClosable: true,
-            });
+            showMessage('グループの作成に失敗しました。', 'error');
             console.error('Error creating group:', error);
         }
     };
@@ -129,70 +108,40 @@ const GroupChatPage = () => {
                     </div>
                 </div>
             </Layout>
-            <AlertDialog
-                isOpen={isCreateOpen}
-                leastDestructiveRef={cancelRef}
-                onClose={onCreateClose}
-                isCentered
+            <Modal
+                title="新しいグループを作成する"
+                visible={isCreateOpen}
+                onOk={handleCreateGroup}
+                onCancel={onCreateClose}
+                okText="Create"
+                centered
             >
-                <AlertDialogOverlay>
-                    <AlertDialogContent>
-                        <AlertDialogHeader fontSize='lg' fontWeight='bold'>
-                            新しいグループを作成
-                        </AlertDialogHeader>
-                        <AlertDialogBody>
-                            <Input
-                                placeholder="グループの名前"
-                                value={groupName}
-                                onChange={(e) => setGroupName(e.target.value)}
-                                className="mb-3"
-                            />
-                            <Input
-                                placeholder="グループID"
-                                value={groupID}
-                                onChange={(e) => setGroupID(e.target.value)}
-                            />
-                        </AlertDialogBody>
-                        <AlertDialogFooter>
-                            <Button ref={cancelRef} onClick={onCreateClose}>
-                                キャンセル
-                            </Button>
-                            <Button onClick={handleCreateGroup} className="ml-3">
-                                作成
-                            </Button>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialogOverlay>
-            </AlertDialog>
-            <AlertDialog
-                isOpen={isOpen}
-                leastDestructiveRef={cancelRef}
-                onClose={onClose}
-                isCentered
+                <Input
+                    placeholder="グループの名前"
+                    value={groupName}
+                    onChange={(e) => setGroupName(e.target.value)}
+                    className="mb-[10px]"
+                />
+                <Input
+                    placeholder="グループID"
+                    value={groupID}
+                    onChange={(e) => setGroupID(e.target.value)}
+                />
+            </Modal>
+            <Modal
+                title="新しいグループに参加する"
+                visible={isOpen}
+                onOk={handleJoinGroup}
+                onCancel={onClose}
+                okText="Join"
+                centered
             >
-                <AlertDialogOverlay>
-                    <AlertDialogContent>
-                        <AlertDialogHeader fontSize='lg' fontWeight='bold'>
-                            新しいグループに参加する
-                        </AlertDialogHeader>
-                        <AlertDialogBody>
-                            <Input
-                                placeholder="グループID"
-                                value={joinGroupID}
-                                onChange={(e) => setJoinGroupID(e.target.value)}
-                            />
-                        </AlertDialogBody>
-                        <AlertDialogFooter>
-                            <Button ref={cancelRef} onClick={onClose}>
-                                キャンセル
-                            </Button>
-                            <Button  onClick={handleJoinGroup} className="ml-3">
-                                参加
-                            </Button>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialogOverlay>
-            </AlertDialog>
+                <Input
+                    placeholder="グループID"
+                    value={joinGroupID}
+                    onChange={(e) => setJoinGroupID(e.target.value)}
+                />
+            </Modal>
         </div>
     );
 };
