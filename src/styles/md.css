@@ -1,0 +1,160 @@
+.markdown-body {
+    line-height: 1.5;
+    color: #333;
+    background-color: #fff;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    font-weight: bold;
+    line-height: 1.25;
+}
+
+.markdown-body h1,
+.markdown-body h2 {
+    border-bottom: none;
+}
+
+.markdown-body h1 {
+    font-size: 2em;
+}
+
+.markdown-body h2 {
+    font-size: 1.5em;
+}
+
+.markdown-body h3 {
+    font-size: 1.25em;
+}
+
+.markdown-body h4 {
+    font-size: 1em;
+}
+
+.markdown-body h5 {
+    font-size: 0.875em;
+}
+
+.markdown-body h6 {
+    font-size: 0.85em;
+}
+
+.markdown-body p {
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+    padding-left: 20px;
+    margin-top: 0;
+    margin-bottom: 16px;
+    list-style-position: outside;
+    list-style-type: disc !important; /* リストの点を表示 */
+}
+
+.markdown-body ol {
+    list-style-type: decimal !important; /* 数字を表示 */
+}
+
+.markdown-body ul li::marker,
+.markdown-body ol li::marker {
+    color: #000 !important; /* リストの番号や点の色を強制的に黒に設定 */
+}
+
+.markdown-body li {
+    margin-top: 0.25em;
+}
+
+.markdown-body blockquote {
+    margin: 0;
+    padding: 0 1em;
+    color: #666;
+    border-left: 0.25em solid #ddd;
+}
+
+.markdown-body code {
+    font-size: 0.9em;
+    background-color: #f7f7f7;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+.markdown-body pre {
+    background-color: #282C34;
+    color: #f8f8f2;
+    display: block;
+    padding: 10px;
+    border-radius: 5px;
+    overflow: auto;
+}
+
+.markdown-body table {
+    border-collapse: collapse;
+    width: 100%;
+    background-color: #fff;
+}
+
+.markdown-body th {
+    padding: 8px;
+    border: 1px solid #d6e3ed !important;
+    background-color: #edf2f7 !important;
+}
+
+.markdown-body td {
+    padding: 8px;
+    border: 1px solid #d6e3ed !important;
+    background-color: #fff !important;
+}
+
+.markdown-body img {
+    max-width: 100%;
+    height: auto;
+    background-color: #fff;
+}
+
+.markdown-body hr {
+    border: 0;
+    height: 1px;
+    background-color: #e0e0e0 !important;
+    margin: 20px 0 !important;
+}
+
+.markdown-body input[type="checkbox"] {
+    appearance: none !important;
+    width: 16px !important;
+    height: 16px !important;
+    margin-right: 8px !important;
+    border: 2px solid #333 !important;
+    border-radius: 3px !important;
+    background-color: #fff !important;
+    vertical-align: middle !important;
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.markdown-body input[type="checkbox"]:checked {
+    background-color: var(--fgColor-accent) !important;
+    border-color: var(--fgColor-accent) !important;
+}
+
+.markdown-body input[type="checkbox"]:checked::before {
+    content: "✓" !important;
+    color: #fff !important;
+    font-weight: bold !important;
+    display: block !important;
+}
+
+.markdown-body li {
+    display: list-item !important; /* リスト項目を表示 */
+    align-items: center !important;
+    color: #000 !important;
+}
