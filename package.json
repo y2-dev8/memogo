@@ -19,6 +19,7 @@
     "date-fns": "^3.6.0",
     "firebase": "^10.12.3",
     "framer-motion": "^11.2.14",
+    "fuse.js": "^7.0.0",
     "github-markdown-css": "^5.6.1",
     "next": "14.2.4",
     "rc-util": "^5.20.0",
