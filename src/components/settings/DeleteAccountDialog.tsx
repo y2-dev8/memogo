@@ -1,14 +1,7 @@
 import React, { RefObject } from 'react';
-import {
-    AlertDialog,
-    AlertDialogBody,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogContent,
-    AlertDialogOverlay,
-    Button,
-    Spinner
-} from '@chakra-ui/react';
+import { Modal, Button, Typography } from 'antd';
+
+const { Text } = Typography;
 
 interface DeleteAccountDialogProps {
     isOpen: boolean;
@@ -25,31 +18,17 @@ const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({
     cancelRef,
     processing,
 }) => (
-    <AlertDialog
-        isOpen={isOpen}
-        leastDestructiveRef={cancelRef}
-        onClose={onClose}
-        isCentered
+    <Modal
+        title="アカウントを削除する"
+        visible={isOpen}
+        onOk={onDelete}
+        onCancel={onClose}
+        okButtonProps={{ danger: true, loading: processing.delete }}
+        okText="Delete"
+        centered
     >
-        <AlertDialogOverlay>
-            <AlertDialogContent>
-                <AlertDialogHeader fontSize='lg' fontWeight='bold'>
-                    アカウントを削除する
-                </AlertDialogHeader>
-                <AlertDialogBody>
-                    本当に実行しますか？この操作は後から元に戻すことはできません。
-                </AlertDialogBody>
-                <AlertDialogFooter>
-                    <Button ref={cancelRef} onClick={onClose}>
-                        キャンセル
-                    </Button>
-                    <Button colorScheme='red' onClick={onDelete} ml={3}>
-                        {processing.delete ? <Spinner size="sm" /> : '削除'}
-                    </Button>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialogOverlay>
-    </AlertDialog>
+        <Text>本当に実行しますか？この操作は後から元に戻すことはできません。</Text>
+    </Modal>
 );
 
 export default DeleteAccountDialog;

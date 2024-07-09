@@ -225,6 +225,7 @@ const Memo = () => {
                                     onCancel={handleEditCancel}
                                     okButtonProps={{ loading: isSaving }}
                                     okText="Save"
+                                    centered
                                 >
                                     <div className="space-y-2.5">
                                         <Input
@@ -252,6 +253,7 @@ const Memo = () => {
                                     onCancel={handleDeleteCancel}
                                     okButtonProps={{ danger: true, loading: isDeleting }}
                                     okText="Delete"
+                                    centered
                                 >
                                     本当にこのメモを削除してもよろしいですか？ この操作は取り消せません。
                                 </Modal>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, Button, Spinner } from '@chakra-ui/react';
+import { Modal, Button } from 'antd';
 import Cropper from 'react-easy-crop';
 
 interface CropModalProps {
@@ -31,33 +31,26 @@ const CropModal: React.FC<CropModalProps> = ({
     processingKey,
     processing,
 }) => (
-    <Modal isOpen={isOpen} onClose={onClose} isCentered size="xl">
-        <ModalOverlay />
-        <ModalContent>
-            <ModalHeader>画像の設定</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody>
-                <div className="relative w-full h-[250px]">
-                    <Cropper
-                        image={image}
-                        crop={crop}
-                        zoom={zoom}
-                        aspect={aspect}
-                        onCropChange={onCropChange}
-                        onZoomChange={onZoomChange}
-                        onCropComplete={onCropComplete}
-                    />
-                </div>
-            </ModalBody>
-            <ModalFooter>
-                <Button onClick={onClose} className='mr-3'>
-                    キャンセル
-                </Button>
-                <Button colorScheme='blue' onClick={handleCropConfirm}>
-                    {processing[processingKey] ? <Spinner size="sm" /> : '決定'}
-                </Button>
-            </ModalFooter>
-        </ModalContent>
+    <Modal
+        title="画像の設定"
+        visible={isOpen}
+        onOk={handleCropConfirm}
+        onCancel={onClose}
+        okButtonProps={{ loading: processing[processingKey] }}
+        okText="Confirm"
+        centered
+    >
+        <div style={{ position: 'relative', width: '100%', height: '250px' }}>
+            <Cropper
+                image={image}
+                crop={crop}
+                zoom={zoom}
+                aspect={aspect}
+                onCropChange={onCropChange}
+                onZoomChange={onZoomChange}
+                onCropComplete={onCropComplete}
+            />
+        </div>
     </Modal>
 );
 

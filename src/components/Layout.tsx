@@ -7,8 +7,8 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children, flex }) => {
     return (
-        <div className={`mx-auto max-w-[97.5%] md:max-w-[60%] ${flex ? 'flex' : ''}`}>
-        {children}
+        <div className={`mx-auto max-w-[90%] md:max-w-[60%] ${flex ? 'flex' : ''}`}>
+            {children}
         </div>
     );
 };

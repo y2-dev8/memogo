@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { db, auth, storage } from '@/firebase/firebaseConfig';
-import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore'; // `query` と `where` を削除しました
-import { deleteUser, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, onAuthStateChanged } from 'firebase/auth';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'; // 必要な関数をインポート
-import { Text, Image, Spinner, Avatar, Heading, useToast, useDisclosure } from '@chakra-ui/react';
+import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { deleteUser, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'firebase/auth';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { Text, Image, Spinner, Avatar, Heading, useDisclosure } from '@chakra-ui/react';
 import Layout from '@/components/Layout';
 import useAuthRedirect from '@/hooks/useAuthRedirect';
 import Head from 'next/head';
@@ -12,7 +12,7 @@ import getCroppedImg from "@/utils/cropImage";
 import FileInput from '@/components/settings/FileInput';
 import CropModal from '@/components/settings/CropModal';
 import DeleteAccountDialog from '@/components/settings/DeleteAccountDialog';
-import { Form, Input, Button, Empty, Typography } from "antd";
+import { Form, Input, Button, Empty, Typography, message, Card, Row, Col } from "antd";
 
 const { TextArea } = Input;
 const { Title } = Typography;
@@ -21,7 +21,7 @@ const Settings = () => {
     useAuthRedirect();
     const [user, setUser] = useState<any>(null);
     const [displayName, setDisplayName] = useState('');
-    const [bio, setBio] = useState(''); // `userID` の関連する部分を削除しました
+    const [bio, setBio] = useState('');
     const [file, setFile] = useState<File | null>(null);
     const [headerFile, setHeaderFile] = useState<File | null>(null);
     const [photoURL, setPhotoURL] = useState('');
@@ -39,11 +39,9 @@ const Settings = () => {
         avatar: false,
         delete: false,
         google: false,
-        resetPassword: false,
         deleteHeader: false
     });
 
-    const toast = useToast();
     const { isOpen: isDeleteDialogOpen, onOpen: onOpenDeleteDialog, onClose: onCloseDeleteDialog } = useDisclosure();
     const cancelRef = useRef(null);
 
@@ -62,7 +60,7 @@ const Settings = () => {
                     const userData = docSnap.data();
                     setUser(userData);
                     setDisplayName(userData.displayName);
-                    setBio(userData.bio); // `userID` の関連する部分を削除しました
+                    setBio(userData.bio);
                     setPhotoURL(userData.photoURL || '');
                     setHeaderPhotoURL(userData.headerPhotoURL || '');
                 }
@@ -76,13 +74,12 @@ const Settings = () => {
         });
     }, []);
 
-    const showToast = (title: string, status: "success" | "error") => {
-        toast({
-            title,
-            status,
-            duration: 5000,
-            isClosable: true,
-        });
+    const showMessage = (content: string, type: "success" | "error") => {
+        if (type === "success") {
+            message.success(content);
+        } else {
+            message.error(content);
+        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'header' | 'avatar') => {
@@ -125,18 +122,18 @@ const Settings = () => {
                     setFile(null);
                 }
                 setProcessing(prev => ({ ...prev, [type]: false }));
-                showToast(`${type === 'header' ? 'ヘッダー' : 'アイコン'}が更新されました!`, "success");
+                showMessage(`${type === 'header' ? 'ヘッダー' : 'アイコン'}が更新されました。`, "success");
             }
         } catch (error) {
             console.error(error);
             setProcessing(prev => ({ ...prev, [type]: false }));
-            showToast(`${type === 'header' ? 'ヘッダー' : 'アイコン'}を更新することに失敗しました。`, "error");
+            showMessage(`${type === 'header' ? 'ヘッダー' : 'アイコン'}を更新することに失敗しました。`, "error");
         }
     };
 
     const updateProfile = async (values: { displayName: string; bio: string }) => {
-        if (!values.displayName) { // ユーザーIDの検証を削除
-            showToast('名前は必須項目です。', 'error');
+        if (!values.displayName) {
+            showMessage('名前は必須です。', 'error');
             return;
         }
 
@@ -144,14 +141,14 @@ const Settings = () => {
             const docRef = doc(db, 'users', currentUser.uid);
             const updatedData: { [key: string]: any } = {
                 displayName: values.displayName,
-                bio: values.bio, // `userID` の関連する部分を削除しました
+                bio: values.bio,
             };
 
             setProcessing(prev => ({ ...prev, profile: true }));
             await updateDoc(docRef, updatedData);
 
             setProcessing(prev => ({ ...prev, profile: false }));
-            showToast("プロフィールが更新されました!", "success");
+            showMessage("プロフィールが更新されました。", "success");
         }
     };
 
@@ -165,7 +162,7 @@ const Settings = () => {
             await deleteDoc(doc(db, 'users', currentUser.uid));
             await deleteUser(currentUser);
             setProcessing(prev => ({ ...prev, delete: false }));
-            showToast("アカウントが削除されました!", "success");
+            showMessage("アカウントが削除されました。", "success");
             router.push('/register');
         }
     };
@@ -176,26 +173,11 @@ const Settings = () => {
             setProcessing(prev => ({ ...prev, google: true }));
             await signInWithPopup(auth, provider);
             setProcessing(prev => ({ ...prev, google: false }));
-            showToast("Googleアカウントとの連携に成功しました!", "success");
+            showMessage("Googleアカウントとの連携に成功しました。", "success");
         } catch (error) {
             console.error(error);
             setProcessing(prev => ({ ...prev, google: false }));
-            showToast("Googleアカウントとの連携に失敗しました。", "error");
-        }
-    };
-
-    const resetPassword = async () => {
-        if (currentUser?.email) {
-            try {
-                setProcessing(prev => ({ ...prev, resetPassword: true }));
-                await sendPasswordResetEmail(auth, currentUser.email);
-                setProcessing(prev => ({ ...prev, resetPassword: false }));
-                showToast("パスワードリセットのメールが送信されました!", "success");
-            } catch (error) {
-                console.error(error);
-                setProcessing(prev => ({ ...prev, resetPassword: false }));
-                showToast("パスワードリセットのメールを送信することに失敗しました。", "error");
-            }
+            showMessage("Googleアカウントとの連携に失敗しました。", "error");
         }
     };
 
@@ -209,11 +191,11 @@ const Settings = () => {
                 await updateDoc(docRef, { headerPhotoURL: '' });
                 setHeaderPhotoURL('');
                 setProcessing(prev => ({ ...prev, deleteHeader: false }));
-                showToast("ヘッダー画像が削除されました!", "success");
+                showMessage("ヘッダー画像が削除されました。", "success");
             } catch (error) {
                 console.error(error);
                 setProcessing(prev => ({ ...prev, deleteHeader: false }));
-                showToast("ヘッダー画像を削除することに失敗しました。", "error");
+                showMessage("ヘッダー画像を削除することに失敗しました。", "error");
             }
         }
     };
@@ -272,22 +254,23 @@ const Settings = () => {
                         </div>
                     </div>
                 </div>
-                <div className="mt-10 flex flex-col space-y-5">
-                    <div className="flex flex-col space-y-3">
-                        <Title level={4}>アカウント</Title>
-                        {/* <Button onClick={resetPassword} className="w-full" type="default">
-                            {processing.resetPassword ? <Spinner size="sm" /> : 'パスワードをリセットする'}
-                        </Button> */}
-                        <Button onClick={linkGoogleAccount} loading={processing.google} type="default">
-                            Googleアカウントと連携する
-                        </Button>
-                    </div>
-                    <div className="flex flex-col space-y-3">
-                    <Title level={4}>削除</Title>
-                    <Button onClick={confirmDeleteAccount} loading={processing.delete} danger>
-                            アカウントを削除する
-                        </Button>
-                    </div>
+                <div className="mt-10">
+                    <Row gutter={[16, 16]}>
+                        <Col span={24} md={12}>
+                            <Card title="アカウント">
+                                <Button onClick={linkGoogleAccount} loading={processing.google} type="default" block>
+                                    Googleアカウントと連携する
+                                </Button>
+                            </Card>
+                        </Col>
+                        <Col span={24} md={12}>
+                            <Card title="削除">
+                                <Button onClick={confirmDeleteAccount} loading={processing.delete} danger block>
+                                    アカウントを削除する
+                                </Button>
+                            </Card>
+                        </Col>
+                    </Row>
                 </div>
             </Layout>
             <CropModal
