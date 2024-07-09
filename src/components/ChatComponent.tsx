@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { auth, db, storage } from '@/firebase/firebaseConfig';
-import { collection, addDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Text, VStack, HStack, Link, Avatar } from '@chakra-ui/react';
 import { FaUpload } from 'react-icons/fa';
@@ -21,18 +21,32 @@ interface Message {
 
 interface ChatComponentProps {
     groupId: string;
-    currentUser: any;
     userIDs: { [key: string]: string };
 }
 
-const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, userIDs }) => {
+const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, userIDs }) => {
     const [messageText, setMessageText] = useState<string>('');
     const [messages, setMessages] = useState<Message[]>([]);
     const [file, setFile] = useState<File | null>(null);
     const [fileURL, setFileURL] = useState<string>('');
     const [isSending, setIsSending] = useState<boolean>(false);
     const [isUploading, setIsUploading] = useState<boolean>(false);
+    const [currentUser, setCurrentUser] = useState<any>(null);
     const chatContainerRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            if (auth.currentUser) {
+                const userDocRef = doc(db, 'users', auth.currentUser.uid);
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists()) {
+                    setCurrentUser(userDoc.data());
+                }
+            }
+        };
+
+        fetchCurrentUser();
+    }, []);
 
     useEffect(() => {
         if (!groupId) return;
