@@ -3,28 +3,19 @@ import { useRouter } from 'next/router';
 import { auth, db } from '@/firebase/firebaseConfig';
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, UserCredential } from 'firebase/auth';
 import { doc, setDoc, getDocs, collection, query, where, QuerySnapshot, DocumentData } from 'firebase/firestore';
-import { Button, Heading, Input, Link, Text, useToast, Box } from '@chakra-ui/react';
+import { Form, Input, Button, Typography, message, Steps, Card, Divider } from 'antd';
 import Layout from '@/components/Layout';
-import NextLink from "next/link";
-import { FaGoogle } from "react-icons/fa";
+import Link from 'next/link';
+import { FcGoogle } from 'react-icons/fc';
 import Head from 'next/head';
-import {
-    Step,
-    StepDescription,
-    StepIcon,
-    StepIndicator,
-    StepNumber,
-    StepSeparator,
-    StepStatus,
-    StepTitle,
-    Stepper,
-    useSteps
-} from '@chakra-ui/react';
+
+const { Title, Text } = Typography;
+const { Step } = Steps;
 
 const steps = [
-    { title: 'First', description: 'ユーザーネーム' },
-    { title: 'Second', description: 'ユーザーID' },
-    { title: 'Third', description: 'メールアドレスとパスワード' },
+    { title: 'First', description: 'ユーザーID' },
+    { title: 'Second', description: 'メールアドレスとパスワード' },
+    { title: 'Third', description: 'ユーザーネーム' },
 ];
 
 const Register = () => {
@@ -32,29 +23,20 @@ const Register = () => {
     const [password, setPassword] = useState<string>('');
     const [displayName, setDisplayName] = useState<string>('');
     const [userID, setUserID] = useState<string>('');
+    const [current, setCurrent] = useState<number>(0);
     const router = useRouter();
-    const toast = useToast();
+    const [form] = Form.useForm();
 
-    const showToast = (title: string, status: "success" | "error") => {
-        toast({
-            title,
-            status,
-            duration: 5000,
-            isClosable: true,
-        });
+    const showToast = (content: string, type: "success" | "error") => {
+        message[type](content);
     };
-
-    const { activeStep, setActiveStep } = useSteps({
-        index: 0,
-        count: steps.length,
-    });
 
     const forbiddenUserIDs: string[] = [
         'register', 'login', 'settings', 'support', 'memo',
         'feed', 'editor', 'search', 'index', 'following', 'bookmarks', 'router'
     ];
 
-    const validateUserID = (userID: string): string | null => {
+    const validateUserID = async (userID: string): Promise<string | null> => {
         const userIDPattern = /^[a-zA-Z0-9_.]+$/;
         if (!userIDPattern.test(userID)) {
             return 'ユーザーIDは、文字、数字、アンダースコア、ドットのみ使用できます。';
@@ -62,31 +44,30 @@ const Register = () => {
         if (forbiddenUserIDs.includes(userID.toLowerCase())) {
             return `ユーザーID"${userID}"は使用できません。`;
         }
+
+        const userIDQuery = query(collection(db, 'users'), where('userID', '==', userID));
+        const userIDSnapshot: QuerySnapshot<DocumentData> = await getDocs(userIDQuery);
+
+        if (!userIDSnapshot.empty) {
+            return "ユーザーIDは既に存在します。";
+        }
+
         return null;
     };
 
-    const handleRegister = async () => {
-        const validationError = validateUserID(userID);
-        if (validationError) {
-            toast({
-                title: 'エラー',
-                description: validationError,
-                status: 'error',
-                duration: 5000,
-                isClosable: true,
-            });
-            return;
-        }
-
-        try {
-            const userIDQuery = query(collection(db, 'users'), where('userID', '==', userID));
-            const userIDSnapshot: QuerySnapshot<DocumentData> = await getDocs(userIDQuery);
-
-            if (!userIDSnapshot.empty) {
-                showToast("ユーザーIDは既に存在します。", "error");
+    const handleNext = async () => {
+        if (current === 0) {
+            const validationError = await validateUserID(userID);
+            if (validationError) {
+                showToast(validationError, "error");
                 return;
             }
+        }
+        setCurrent(current + 1);
+    };
 
+    const handleRegister = async () => {
+        try {
             const userCredential: UserCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
             await setDoc(doc(db, 'users', user.uid), {
@@ -101,7 +82,7 @@ const Register = () => {
     };
 
     const handleGoogleSignIn = async () => {
-        const validationError = validateUserID(userID);
+        const validationError = await validateUserID(userID);
         if (validationError) {
             showToast(validationError, "error");
             return;
@@ -111,123 +92,134 @@ const Register = () => {
             const provider = new GoogleAuthProvider();
             const result = await signInWithPopup(auth, provider);
             const user = result.user;
+            setDisplayName(user.displayName || '');
             await setDoc(doc(db, 'users', user.uid), {
                 displayName: user.displayName,
                 email: user.email,
                 userID: userID
             });
-            router.push('/');
+            setCurrent(steps.length - 1);
         } catch (error) {
-            showToast("Googleでのサインアップ中にエラーが発生しました。", "error")
+            showToast("Googleでのサインアップ中にエラーが発生しました。", "error");
         }
     };
 
-    const handleNextStep = () => {
-        setActiveStep((prevStep) => prevStep + 1);
+    const prev = () => {
+        setCurrent(current - 1);
     };
 
-    const handlePreviousStep = () => {
-        setActiveStep((prevStep) => prevStep - 1);
-    };
+    const stepsContent = [
+        {
+            title: 'ユーザーID',
+            content: (
+                <Form.Item
+                    name="userID"
+                    rules={[{ required: true, message: 'ユーザーIDを入力してください。' }]}
+                >
+                    <Input
+                        value={userID}
+                        onChange={(e) => setUserID(e.target.value)}
+                        placeholder="ユーザーID"
+                    />
+                </Form.Item>
+            )
+        },
+        {
+            title: 'メールアドレスとパスワード',
+            content: (
+                <>
+                    <Form.Item
+                        name="email"
+                        rules={[{ required: true, message: 'メールアドレスを入力してください。' }]}
+                    >
+                        <Input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="メールアドレス"
+                        />
+                    </Form.Item>
+                    <Form.Item
+                        name="password"
+                        rules={[{ required: true, message: 'パスワードを入力してください。' }]}
+                    >
+                        <Input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="パスワード"
+                        />
+                    </Form.Item>
+                </>
+            )
+        },
+        {
+            title: 'ユーザーネーム',
+            content: (
+                <Form.Item
+                    name="displayName"
+                    rules={[{ required: true, message: 'ユーザーネームを入力してください。' }]}
+                >
+                    <Input
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        placeholder="ユーザーネーム"
+                    />
+                </Form.Item>
+            )
+        }
+    ];
 
     return (
-        <div className="container mx-auto my-10">
+        <div className="container mx-auto my-10 flex justify-center items-center min-h-screen">
             <Head>
                 <title>Register</title>
             </Head>
             <Layout>
-                <Heading size="lg" className="mb-5">アカウント登録</Heading>
-                <Box className='hidden md:block mb-5'>
-                    <Stepper index={activeStep}>
-                        {steps.map((step, index) => (
-                            <Step key={index}>
-                                <StepIndicator>
-                                    <StepStatus
-                                        complete={<StepIcon />}
-                                        incomplete={<StepNumber />}
-                                        active={<StepNumber />}
-                                    />
-                                </StepIndicator>
-
-                                <Box flexShrink='0'>
-                                    <StepTitle>{step.title}</StepTitle>
-                                    <StepDescription>{step.description}</StepDescription>
-                                </Box>
-
-                                <StepSeparator />
-                            </Step>
-                        ))}
-                    </Stepper>
-                </Box>
-                <div className="space-y-3 mb-5">
-                    {activeStep === 0 && (
-                        <Input
-                            type="text"
-                            value={displayName}
-                            onChange={(e) => setDisplayName(e.target.value)}
-                            placeholder="ユーザーネーム"
-                            className="w-full"
-                        />
-                    )}
-                    {activeStep === 1 && (
-                        <Input
-                            type="text"
-                            value={userID}
-                            onChange={(e) => setUserID(e.target.value)}
-                            placeholder="ユーザーID"
-                            className="w-full"
-                            isRequired
-                        />
-                    )}
-                    {activeStep === 2 && (
-                        <>
-                            <Input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="メールアドレス"
-                                className="w-full"
-                            />
-                            <Input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="パスワード"
-                                className="w-full"
-                            />
-                        </>
-                    )}
-                </div>
-                <div className="flex flex-col md:flex-row mb-5">
-                    <div className="flex mb-3 md:mb-0 space-x-3 md:mr-3">
-                        {activeStep > 0 && (
-                            <Button onClick={handlePreviousStep} variant="outline" className="w-full md:w-auto">
-                                戻る
-                            </Button>
-                        )}
-                        {activeStep < steps.length - 1 && (
-                            <Button onClick={handleNextStep} colorScheme='teal' className="w-full md:w-auto">
-                                次へ
-                            </Button>
-                        )}
-                        {activeStep === steps.length - 1 && (
-                            <Button onClick={handleRegister} colorScheme='teal' className="w-full md:w-auto">
-                                登録
-                            </Button>
-                        )}
-                    </div>
-                    <Button onClick={handleGoogleSignIn} colorScheme='gray' leftIcon={<FaGoogle className="text-slate-300" />}>
-                        Googleと連携する
+                <Card className="max-w-[400px]">
+                    <Title level={3} className="mb-5 text-center">Login with</Title>
+                    <Button onClick={handleGoogleSignIn} type="dashed" className="w-full" icon={<FcGoogle className="text-lg" />}>
+                        Google
                     </Button>
-                </div>
-                <Text>
-                    既にアカウントを持っていますか？{' '}
-                    <Link color="blue.500">
-                        <NextLink href="/login">
-                            ログイン
-                        </NextLink>
-                    </Link>
-                </Text>
+                    <Divider><p className="font-normal text-sm text-gray-500">or</p></Divider>
+                    <Steps current={current} className="mb-5">
+                        {steps.map((item) => (
+                            <Step key={item.title} title={item.title} description={item.description} />
+                        ))}
+                    </Steps>
+                    <Form
+                        form={form}
+                        layout="vertical"
+                        onFinish={handleRegister}
+                    >
+                        {stepsContent[current].content}
+                        <div className="flex justify-between mt-5">
+                            {current > 0 && (
+                                <Button onClick={prev} type="default">
+                                    戻る
+                                </Button>
+                            )}
+                            {current < steps.length - 1 && (
+                                <Button onClick={handleNext} type="primary">
+                                    次へ
+                                </Button>
+                            )}
+                            {current === steps.length - 1 && (
+                                <Button type="primary" htmlType="submit">
+                                    登録
+                                </Button>
+                            )}
+                        </div>
+                    </Form>
+                    <div className="mt-5 w-full text-center">
+                        <p>
+                            既にアカウントを持っていますか？
+                            <Link href="/login" className="text-blue-500 hover:text-blue-500 hover:underline">
+                                ログイン
+                            </Link>
+                        </p>
+                    </div>
+                </Card>
             </Layout>
         </div>
     );

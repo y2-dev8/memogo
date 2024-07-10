@@ -5,7 +5,6 @@ import { getDoc, getDocs, query, where, doc, updateDoc, arrayUnion, collection }
 import { Button, Spin, Input, message, Modal } from 'antd';
 import RoomList from '@/components/RoomList';
 import ChatComponent from '@/components/ChatComponent';
-import CurrentRoom from '@/components/CurrentGroups';
 import Head from 'next/head';
 import { PlusOutlined } from "@ant-design/icons"
 
@@ -89,7 +88,6 @@ const GroupChat = () => {
                 <div className="md:w-[80%] py-5 md:py-0">
                     {groupId && currentUser && (
                         <>
-                            {/* <CurrentRoom currentGroupId={groupId as string} userId={currentUser.uid} /> */}
                             <ChatComponent groupId={groupId as string} currentUser={currentUser} userIDs={userIDs} />
                         </>
                     )}
