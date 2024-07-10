@@ -3,11 +3,13 @@ import { useRouter } from 'next/router';
 import { auth } from "@/firebase/firebaseConfig";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import Layout from '@/components/Layout';
-import { Heading, Text, Link, useToast } from '@chakra-ui/react';
-import NextLink from "next/link";
+import { useToast } from '@chakra-ui/react';
+import Link from "next/link";
 import { FcGoogle } from "react-icons/fc";
 import Head from 'next/head';
-import { Button, Input } from "antd"
+import { Button, Input, Card, Typography, Divider } from "antd";
+
+const { Title, Text } = Typography;
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -49,15 +51,17 @@ const Login = () => {
     };
 
     return (
-        <div className="container mx-auto my-10">
+        <div className="container mx-auto flex justify-center items-center min-h-screen">
             <Head>
                 <title>Login</title>
             </Head>
             <Layout>
-                <div className="flex justify-center mb-5">
-                    <p className="text-2xl font-bold">ログイン</p>
-                </div>
-                <div className="flex flex-col space-y-5">
+                <Card className="max-w-[400px]">
+                    <Title level={3} className="mb-5 text-center">Login with</Title>
+                    <Button onClick={handleGoogleSignIn} type="dashed" className="w-full" icon={<FcGoogle className="text-lg" />}>
+                        Google
+                    </Button>
+                    <Divider><p className="font-normal text-sm text-gray-500">or</p></Divider>
                     <div className="flex flex-col space-y-3">
                         <Input
                             type="email"
@@ -72,22 +76,18 @@ const Login = () => {
                             placeholder="パスワード"
                         />
                     </div>
-                    <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3">
-                        <Button onClick={handleLogin} type="primary">
-                            ログイン
-                        </Button>
-                        <Button onClick={handleGoogleSignIn} type="dashed">
-                            <FcGoogle className='text-lg' />
-                            Googleでログイン
-                        </Button>
+                    <Button onClick={handleLogin} type="primary" className="w-full mt-5">
+                        ログイン
+                    </Button>
+                    <div className="mt-5 w-full text-center">
+                        <Text>
+                            アカウントを持っていませんか？
+                            <Link href="/register" className="text-blue-500 hover:text-blue-500 hover:underline">
+                                新規登録
+                            </Link>
+                        </Text>
                     </div>
-                    <p className="text-sm">
-                        アカウントを持っていませんか？
-                        <NextLink href="/register" className="text-blue-500 hover:underline">
-                            新規登録
-                        </NextLink>
-                    </p>
-                </div>
+                </Card>
             </Layout>
         </div>
     );

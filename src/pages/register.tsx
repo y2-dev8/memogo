@@ -57,6 +57,10 @@ const Register = () => {
 
     const handleNext = async () => {
         if (current === 0) {
+            if (!userID) {
+                showToast('ユーザーIDを入力してください。', 'error');
+                return;
+            }
             const validationError = await validateUserID(userID);
             if (validationError) {
                 showToast(validationError, "error");
@@ -82,6 +86,10 @@ const Register = () => {
     };
 
     const handleGoogleSignIn = async () => {
+        if (!userID) {
+            showToast('ユーザーIDを入力してください。', 'error');
+            return;
+        }
         const validationError = await validateUserID(userID);
         if (validationError) {
             showToast(validationError, "error");

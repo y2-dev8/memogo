@@ -3,7 +3,7 @@ import { auth, db } from '@/firebase/firebaseConfig';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import { onAuthStateChanged } from 'firebase/auth';
-import { Spin, List, Card, message } from 'antd';
+import { Spin, message, Divider, Empty } from 'antd';
 import Head from 'next/head';
 import Layout from '@/components/Layout';
 import useAuthRedirect from '@/hooks/useAuthRedirect';
@@ -82,30 +82,26 @@ const Following = () => {
                 <title>Following</title>
             </Head>
             <Layout>
-                {following.length > 0 && (
-                    <List
-                        grid={{ gutter: 16, column: 1 }}
-                        dataSource={following}
-                        renderItem={user => (
-                            <List.Item style={{ borderBottom: "none" }}>
-                                <Card
-                                    title={
-                                        <Flex align="center">
-                                            <Link href={`/users/${user.userID}`} passHref>
-                                                <Avatar src={user.photoURL} size="sm" name={user.displayName} className="mr-3" />
-                                            </Link>
-                                            <Link href={`/users/${user.userID}`} className="hover:text-black font-bold text-md" passHref>
-                                                {user.displayName}
-                                            </Link>
-                                        </Flex>
-                                    }
-                                    className="w-full"
-                                >
-                                    <p className="text-sm text-gray-500">{user.bio}</p>
-                                </Card>
-                            </List.Item>
-                        )}
-                    />
+                {following.length > 0 ? (
+                    <div className="space-y-3">
+                        {following.map((user, index) => (
+                            <div key={user.uid}>
+                                <Flex align="center">
+                                    <Link href={`/users/${user.userID}`} passHref>
+                                        <Avatar src={user.photoURL} size="md" name={user.displayName} className="mr-3" />
+                                    </Link>
+                                    <Link href={`/users/${user.userID}`} className="hover:text-black font-bold text-md" passHref>
+                                        {user.displayName}
+                                    </Link>
+                                </Flex>
+                                {index < following.length - 1 && <Divider />}
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="w-full flex justify-center">
+                        <Empty description="No followed users found." />
+                    </div>
                 )}
             </Layout>
         </div>
