@@ -63,7 +63,7 @@ const SideBar: React.FC = () => {
                 <div className="flex-grow">
                     <MenuItem icon={<FiHash className="text-lg" />} href="/feed" />
                     <MenuItem icon={<FiSearch className="text-lg" />} href="/search" />
-                    {user && <MenuItem icon={<FiUser className="text-lg" />} href={`/${userID}`} />}
+                    {user && <MenuItem icon={<FiUser className="text-lg" />} href={`/users/${userID}`} />}
                     {user && <MenuItem icon={<FiUserPlus className="text-lg" />} href='/following' />}
                     {user && <MenuItem icon={<FiBookmark className="text-lg" />} href='/bookmarks' />}
                     {user && <MenuItem icon={<FiFeather className="text-lg" />} href='/editor' />}

@@ -3,10 +3,11 @@ import { useRouter } from 'next/router';
 import { auth } from "@/firebase/firebaseConfig";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import Layout from '@/components/Layout';
-import { Button, Heading, Input, Text, Link, useToast } from '@chakra-ui/react';
+import { Heading, Text, Link, useToast } from '@chakra-ui/react';
 import NextLink from "next/link";
-import { FaGoogle } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
 import Head from 'next/head';
+import { Button, Input } from "antd"
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -53,37 +54,40 @@ const Login = () => {
                 <title>Login</title>
             </Head>
             <Layout>
-                <Heading size="lg" className="mb-5">ログイン</Heading>
-                <Input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="メールアドレス"
-                    className="w-full mb-3"
-                />
-                <Input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="パスワード"
-                    className="w-full mb-5"
-                />
-                <div className="flex flex-col md:flex-row">
-                    <Button onClick={handleLogin} colorScheme='blue' className="mb-5">
-                        ログイン
-                    </Button>
-                    <Button onClick={handleGoogleSignIn} colorScheme='gray' className="md:ml-3 mb-5" leftIcon={<FaGoogle className="text-slate-300" />}>
-                        Googleアカウントでログイン
-                    </Button>
+                <div className="flex justify-center mb-5">
+                    <p className="text-2xl font-bold">ログイン</p>
                 </div>
-                <Text>
-                    アカウントを持っていませんか？{' '}
-                    <Link color="blue.500">
-                        <NextLink href="/register">
+                <div className="flex flex-col space-y-5">
+                    <div className="flex flex-col space-y-3">
+                        <Input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="メールアドレス"
+                        />
+                        <Input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="パスワード"
+                        />
+                    </div>
+                    <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3">
+                        <Button onClick={handleLogin} type="primary">
+                            ログイン
+                        </Button>
+                        <Button onClick={handleGoogleSignIn} type="dashed">
+                            <FcGoogle className='text-lg' />
+                            Googleでログイン
+                        </Button>
+                    </div>
+                    <p className="text-sm">
+                        アカウントを持っていませんか？
+                        <NextLink href="/register" className="text-blue-500 hover:underline">
                             新規登録
                         </NextLink>
-                    </Link>
-                </Text>
+                    </p>
+                </div>
             </Layout>
         </div>
     );

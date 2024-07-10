@@ -2,11 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { auth, db } from '@/firebase/firebaseConfig';
 import { getDoc, getDocs, query, where, doc, updateDoc, arrayUnion, collection } from 'firebase/firestore';
-import { Button, useToast, useDisclosure, AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, Input, Spinner } from '@chakra-ui/react';
-import { FaPlus } from 'react-icons/fa';
+import { Button, Spin, Input, message, Modal } from 'antd';
 import RoomList from '@/components/RoomList';
 import ChatComponent from '@/components/ChatComponent';
 import Head from 'next/head';
+import { PlusOutlined } from "@ant-design/icons"
 
 const GroupChat = () => {
     const router = useRouter();
@@ -15,15 +15,22 @@ const GroupChat = () => {
     const [userIDs, setUserIDs] = useState<{ [key: string]: string }>({});
     const [joinGroupID, setJoinGroupID] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(true);
-    const toast = useToast();
-    const { isOpen, onOpen, onClose } = useDisclosure();
-    const cancelRef = useRef(null);
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [confirmLoading, setConfirmLoading] = useState<boolean>(false);
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user) {
                 const userDoc = await getDoc(doc(db, 'users', user.uid));
                 setCurrentUser(userDoc.data());
+
+                const userIDMap: { [key: string]: string } = {};
+                const usersSnapshot = await getDocs(collection(db, 'users'));
+                usersSnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    userIDMap[doc.id] = data.userID;
+                });
+                setUserIDs(userIDMap);
             } else {
                 setCurrentUser(null);
             }
@@ -34,18 +41,14 @@ const GroupChat = () => {
     }, []);
 
     const handleJoinGroup = async () => {
+        setConfirmLoading(true);
         try {
             const groupIDQuery = query(collection(db, 'groupChat'), where('groupID', '==', joinGroupID));
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (groupIDSnapshot.empty) {
-                toast({
-                    title: 'エラー',
-                    description: 'グループIDが存在しません。',
-                    status: 'error',
-                    duration: 5000,
-                    isClosable: true,
-                });
+                message.error('グループIDが存在しません。');
+                setConfirmLoading(false);
                 return;
             }
 
@@ -54,28 +57,20 @@ const GroupChat = () => {
                 participants: arrayUnion(auth.currentUser?.uid)
             });
 
-            onClose();
-            toast({
-                title: 'グループの参加に成功しました!',
-                status: 'success',
-                duration: 5000,
-                isClosable: true,
-            });
+            message.success('グループに参加しました。');
+            setJoinGroupID(''); // 入力フィールドをリセット
+            setIsModalOpen(false);
             router.push(`/message/${joinGroupID}`);
         } catch (error) {
-            toast({
-                title: 'エラー',
-                description: 'グループの参加に失敗しました。',
-                status: 'error',
-                duration: 5000,
-                isClosable: true,
-            });
+            message.error('グループの参加に失敗しました。');
             console.error('Error joining group:', error);
+        } finally {
+            setConfirmLoading(false);
         }
     };
 
     if (loading) {
-        return <div className="w-full min-h-screen flex justify-center items-center"><Spinner size="xl" /></div>;
+        return <div className="w-full min-h-screen flex justify-center items-center"><Spin size="large" /></div>;
     }
 
     return (
@@ -86,7 +81,7 @@ const GroupChat = () => {
             <div className="flex flex-col md:flex-row">
                 <div className="md:w-[20%] md:mr-5">
                     <div className="hidden md:block">
-                        <Button onClick={onOpen} variant="outline" leftIcon={<FaPlus />} className="w-full mb-[30px]">参加する</Button>
+                        <Button onClick={() => setIsModalOpen(true)} icon={<PlusOutlined />} className="w-full mb-10" type="primary">参加する</Button>
                     </div>
                     {auth.currentUser && <RoomList userId={auth.currentUser.uid} currentGroup={groupId as string} />}
                 </div>
@@ -99,35 +94,21 @@ const GroupChat = () => {
                 </div>
             </div>
 
-            <AlertDialog
-                isOpen={isOpen}
-                leastDestructiveRef={cancelRef}
-                onClose={onClose}
-                isCentered
+            <Modal
+                title="新しいグループに参加する"
+                visible={isModalOpen}
+                onOk={handleJoinGroup}
+                confirmLoading={confirmLoading}
+                onCancel={() => setIsModalOpen(false)}
+                okText="Join"
+                centered
             >
-                <AlertDialogOverlay>
-                    <AlertDialogContent>
-                        <AlertDialogHeader fontSize='lg' fontWeight='bold'>
-                            新しいグループに参加する
-                        </AlertDialogHeader>
-                        <AlertDialogBody>
-                            <Input
-                                placeholder="グループID"
-                                value={joinGroupID}
-                                onChange={(e) => setJoinGroupID(e.target.value)}
-                            />
-                        </AlertDialogBody>
-                        <AlertDialogFooter>
-                            <Button ref={cancelRef} onClick={onClose}>
-                                キャンセル
-                            </Button>
-                            <Button colorScheme='teal' onClick={handleJoinGroup} ml={3}>
-                                参加
-                            </Button>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialogOverlay>
-            </AlertDialog>
+                <Input
+                    placeholder="グループID"
+                    value={joinGroupID}
+                    onChange={(e) => setJoinGroupID(e.target.value)}
+                />
+            </Modal>
         </div>
     );
 };

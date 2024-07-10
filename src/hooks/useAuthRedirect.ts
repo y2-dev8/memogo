@@ -9,7 +9,7 @@ const useAuthRedirect = () => {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (!user) {
-                router.push('/login');
+                router.push('/403');
             }
         });
 

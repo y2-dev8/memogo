@@ -21,32 +21,18 @@ interface Message {
 
 interface ChatComponentProps {
     groupId: string;
+    currentUser: any;
     userIDs: { [key: string]: string };
 }
 
-const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, userIDs }) => {
+const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, userIDs }) => {
     const [messageText, setMessageText] = useState<string>('');
     const [messages, setMessages] = useState<Message[]>([]);
     const [file, setFile] = useState<File | null>(null);
     const [fileURL, setFileURL] = useState<string>('');
     const [isSending, setIsSending] = useState<boolean>(false);
     const [isUploading, setIsUploading] = useState<boolean>(false);
-    const [currentUser, setCurrentUser] = useState<any>(null);
     const chatContainerRef = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        const fetchCurrentUser = async () => {
-            if (auth.currentUser) {
-                const userDocRef = doc(db, 'users', auth.currentUser.uid);
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
-                    setCurrentUser(userDoc.data());
-                }
-            }
-        };
-
-        fetchCurrentUser();
-    }, []);
 
     useEffect(() => {
         if (!groupId) return;
@@ -131,12 +117,14 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, userIDs }) => {
                             }`}
                         >
                             <HStack align="start" spacing="3">
-                                <NextLink href={`/${userIDs[msg.sender]}`}>
-                                    <Avatar src={msg.senderPhotoURL} name={msg.senderName} size="md" />
+                                <NextLink href={`/users/${userIDs[msg.sender]}`} passHref>
+                                    <Link>
+                                        <Avatar src={msg.senderPhotoURL} name={msg.senderName} size="md" />
+                                    </Link>
                                 </NextLink>
                                 <div>
                                     <div className="flex items-center">
-                                        <NextLink href={`/${userIDs[msg.sender]}`} passHref>
+                                        <NextLink href={`/users/${userIDs[msg.sender]}`} passHref>
                                             <Link fontWeight="bold">{msg.senderName}</Link>
                                         </NextLink>
                                         <Text className="ml-2.5 opacity-50 text-xs text-slate-500">{format(new Date(msg.timestamp.toDate()), 'yyyy-MM-dd HH:mm')}</Text>
@@ -161,7 +149,8 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, userIDs }) => {
                 <div className="flex space-x-3">
                     <Upload beforeUpload={handleBeforeUpload} showUploadList={false}>
                         <Button icon={<UploadOutlined />} type="dashed" loading={isUploading}>
-                            {file ? 'アップロード済み' : 'アップロード'}
+                            {file ? 'アップロード済み' : 'アップロード'
+                            }
                         </Button>
                     </Upload>
                     <Button

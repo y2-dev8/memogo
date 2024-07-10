@@ -5,10 +5,8 @@ import { collection, query, where, getDocs, addDoc, deleteDoc } from 'firebase/f
 import Link from 'next/link';
 import Layout from '@/components/Layout';
 import Head from 'next/head';
-import { Button, Empty, message, Spin, Image, Typography, List, Card } from "antd";
-import { Avatar } from "@chakra-ui/react"
-
-const { Title, Text } = Typography;
+import { Button, Empty, Spin, Image, List, Card } from "antd";
+import { Avatar } from "@chakra-ui/react";
 
 interface User {
     photoURL: string;
@@ -49,11 +47,10 @@ const UserPage = () => {
                         setIsCurrentUser(currentUser?.uid === userSnapshot.docs[0].id);
                         await fetchMemos(userSnapshot.docs[0].id);
                     } else {
-                        setError('ユーザーが見つかりませんでした。');
+                        router.push('/404');
                     }
                 } catch (err) {
                     setError('ユーザーデータの取得に失敗しました。');
-                    message.error('ユーザーデータの取得に失敗しました。');
                     console.error(err);
                 }
             }
@@ -61,14 +58,16 @@ const UserPage = () => {
 
         const fetchMemos = async (uid: string) => {
             try {
-                const memosQuery = query(collection(db, 'memos'), where('userId', '==', uid));
+                const memosQuery = query(
+                    collection(db, 'memos'), 
+                    where('userId', '==', uid)
+                );
                 const querySnapshot = await getDocs(memosQuery);
                 if (!querySnapshot.empty) {
                     setMemos(querySnapshot.docs.map(doc => ({ ...doc.data(), uid: doc.id } as Memo)));
                 }
             } catch (err) {
                 setError('メモの取得に失敗しました。');
-                message.error('メモの取得に失敗しました。');
                 console.error(err);
             }
         };
@@ -81,7 +80,6 @@ const UserPage = () => {
                     if (!followSnapshot.empty) setIsFollowing(true);
                 } catch (err) {
                     setError('フォロー状態の確認に失敗しました。');
-                    message.error('フォロー状態の確認に失敗しました。');
                     console.error(err);
                 }
             }
@@ -95,7 +93,6 @@ const UserPage = () => {
                     setFollowerCount(querySnapshot.size);
                 } catch (err) {
                     setError('フォロワー数の取得に失敗しました。');
-                    message.error('フォロワー数の取得に失敗しました。');
                     console.error(err);
                 }
             }
@@ -110,7 +107,7 @@ const UserPage = () => {
         };
 
         fetchData();
-    }, [userId, currentUser]);
+    }, [userId, currentUser, router]);
 
     const handleFollow = async () => {
         if (currentUser && userId && typeof userId === 'string') {
@@ -121,10 +118,8 @@ const UserPage = () => {
                 });
                 setIsFollowing(true);
                 setFollowerCount(prev => prev + 1);
-                message.success('フォローしました。');
             } catch (err) {
                 setError('フォローに失敗しました。');
-                message.error('フォローに失敗しました。');
                 console.error(err);
             }
         }
@@ -140,10 +135,8 @@ const UserPage = () => {
                 });
                 setIsFollowing(false);
                 setFollowerCount(prev => prev - 1);
-                message.success('フォロー解除しました。');
             } catch (err) {
                 setError('フォロー解除に失敗しました。');
-                message.error('フォロー解除に失敗しました。');
                 console.error(err);
             }
         }
@@ -162,13 +155,12 @@ const UserPage = () => {
                         <Image src={user.headerPhotoURL} className="w-full h-auto" />
                     </div>
                 )}
-                <div className="contents lg:flex items-center">
+                <div className="contents lg:flex items-center space-y-3 lg:space-y-0 lg:space-x-3">
                     <Avatar src={user.photoURL} name={user.displayName} size="lg" />
-                    <div className='mt-3 lg:mt-0 lg:ml-3 w-full'>
-                        <div className="flex items-center">
+                        <div className="w-full flex items-center">
                             <div>
                                 <p className="text-lg font-bold">{user.displayName}</p>
-                                <p className="text-sm text-slate-500 lg:whitespace-pre-line">{user.bio}</p>
+                                <p className="text-sm text-gray-500 lg:whitespace-pre-line">{user.bio}</p>
                             </div>
                             <div className="ml-auto">
                                 {!isCurrentUser && (
@@ -185,31 +177,31 @@ const UserPage = () => {
                                         <Link href="/settings">Edit profile</Link>
                                     </Button>
                                 )}
-                            </div>
                         </div>
                     </div>
                 </div>
-                <p className="text-slate-500 mt-3 text-sm">{followerCount} Followers</p>
-                <div className="mt-[30px]">
-                    <List
-                        grid={{ gutter: 16, column: 1 }}
-                        dataSource={memos}
-                        renderItem={memo => (
-                            <List.Item>
-                                <Link href={`/memo?id=${memo.uid}`}>
-                                    <Card title={memo.title}>
-                                        <Card.Meta
-                                            description={memo.description.length > 100 ? `${memo.description.substring(0, 100)}...` : memo.description}
-                                        />
-                                    </Card>
-                                </Link>
-                            </List.Item>
-                        )}
-                    />
-                    {memos.length === 0 && (
+                <p className="text-gray-500 mt-3 text-sm">{followerCount} Followers</p>
+                <div className="mt-10">
+                    {memos.length === 0 ? (
                         <div className="w-full flex justify-center">
                             <Empty description="No memos found for this user." />
                         </div>
+                    ) : (
+                        <List
+                            grid={{ gutter: 16, column: 1 }}
+                            dataSource={memos}
+                            renderItem={memo => (
+                                <List.Item>
+                                    <Link href={`/memo?id=${memo.uid}`}>
+                                        <Card title={memo.title}>
+                                            <Card.Meta
+                                                description={memo.description.length > 100 ? `${memo.description.substring(0, 100)}...` : memo.description}
+                                            />
+                                        </Card>
+                                    </Link>
+                                </List.Item>
+                            )}
+                        />
                     )}
                 </div>
             </Layout>

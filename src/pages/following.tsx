@@ -3,7 +3,7 @@ import { auth, db } from '@/firebase/firebaseConfig';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import { onAuthStateChanged } from 'firebase/auth';
-import { Spin, List, Card, message, Empty } from 'antd';
+import { Spin, List, Card, message } from 'antd';
 import Head from 'next/head';
 import Layout from '@/components/Layout';
 import useAuthRedirect from '@/hooks/useAuthRedirect';
@@ -82,7 +82,7 @@ const Following = () => {
                 <title>Following</title>
             </Head>
             <Layout>
-                {following.length > 0 ? (
+                {following.length > 0 && (
                     <List
                         grid={{ gutter: 16, column: 1 }}
                         dataSource={following}
@@ -91,10 +91,10 @@ const Following = () => {
                                 <Card
                                     title={
                                         <Flex align="center">
-                                            <Link href={`/${user.userID}`} passHref>
+                                            <Link href={`/users/${user.userID}`} passHref>
                                                 <Avatar src={user.photoURL} size="sm" name={user.displayName} className="mr-3" />
                                             </Link>
-                                            <Link href={`/${user.userID}`} className="hover:text-black font-bold text-md" passHref>
+                                            <Link href={`/users/${user.userID}`} className="hover:text-black font-bold text-md" passHref>
                                                 {user.displayName}
                                             </Link>
                                         </Flex>
@@ -106,10 +106,6 @@ const Following = () => {
                             </List.Item>
                         )}
                     />
-                ) : (
-                    <div className="w-full flex justify-center">
-                        <Empty description="No followed users found." />
-                    </div>
                 )}
             </Layout>
         </div>

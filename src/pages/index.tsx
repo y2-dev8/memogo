@@ -1,6 +1,5 @@
 import Layout from "@/components/Layout";
 import {
-  Alert,
   AlertIcon,
   Link,
   Heading,
@@ -11,16 +10,50 @@ import {
   Image,
   AlertDescription,
 } from "@chakra-ui/react";
+import { Timeline, Collapse, CollapseProps } from "antd"
+
+const items: CollapseProps['items'] = [
+  {
+    key: '1',
+    label: 'This is panel header 1',
+    children: <p>aaa</p>,
+  },
+  {
+    key: '2',
+    label: 'This is panel header 2',
+    children: <p>aaa</p>,
+  },
+  {
+    key: '3',
+    label: 'This is panel header 3',
+    children: <p>aaa</p>,
+  },
+];
 
 export default function Home() {
   return (
     <>
       <div className="container mx-auto my-10">
         <Layout>
-          <Alert status='info' className="mb-5">
-            <AlertIcon />
-            アカウントIDの仕様が変更されました。
-          </Alert>
+          <Timeline
+            mode="left"
+            items={[
+              {
+                label: '07-10',
+                children: 'UIデザインを大幅にアップデート',
+              },
+              {
+                label: '07-XX',
+                children: 'メッセージ機能を追加',
+                color: 'green',
+              },
+              {
+                label: '2024-06-XX',
+                children: 'サービスの一般運用開始',
+              },
+            ]}
+          />
+          <Collapse items={items} defaultActiveKey={['1']} />
           <Heading as="h1" size="2xl" mb={6}>MemoGo</Heading>
 
           <Divider className="my-5" />

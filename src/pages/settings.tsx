@@ -4,7 +4,7 @@ import { db, auth, storage } from '@/firebase/firebaseConfig';
 import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { deleteUser, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { Image, Avatar, useDisclosure } from '@chakra-ui/react';
+import { Avatar, useDisclosure } from '@chakra-ui/react';
 import Layout from '@/components/Layout';
 import useAuthRedirect from '@/hooks/useAuthRedirect';
 import Head from 'next/head';
@@ -12,7 +12,7 @@ import getCroppedImg from "@/utils/cropImage";
 import FileInput from '@/components/settings/FileInput';
 import CropModal from '@/components/settings/CropModal';
 import DeleteAccountDialog from '@/components/settings/DeleteAccountDialog';
-import { Form, Input, Button, Empty, message, Card, Row, Col, Spin } from "antd";
+import { Form, Input, Button, Empty, message, Card, Row, Col, Spin, Image } from "antd";
 
 const { TextArea } = Input;
 
@@ -131,11 +131,6 @@ const Settings = () => {
     };
 
     const updateProfile = async (values: { displayName: string; bio: string }) => {
-        if (!values.displayName) {
-            showMessage('名前は必須です。', 'error');
-            return;
-        }
-
         if (currentUser) {
             const docRef = doc(db, 'users', currentUser.uid);
             const updatedData: { [key: string]: any } = {
@@ -213,9 +208,7 @@ const Settings = () => {
                     <div className="flex flex-col w-full space-y-5">
                         <div className="flex flex-col space-y-3">
                             {headerPhotoURL ? (
-                                <div className="rounded-md overflow-hidden border">
-                                    <Image src={headerPhotoURL} className="w-full h-auto" />
-                                </div>
+                                <Image src={headerPhotoURL} />
                             ) : (
                                 <div className="w-full h-[100px] flex items-center justify-center cursor-pointer rounded-md border overflow-hidden" onClick={() => headerFileInput.current?.click()}>
                                     <Empty description="ヘッダーを設定する" image={Empty.PRESENTED_IMAGE_SIMPLE} />
