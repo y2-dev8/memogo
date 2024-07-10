@@ -75,7 +75,7 @@ const Register = () => {
                 email,
                 userID
             });
-            router.push('/');
+            router.push(`/users/${userID}`);
         } catch (error) {
             showToast("登録中にエラーが発生しました。", "error");
         }
@@ -98,7 +98,7 @@ const Register = () => {
                 email: user.email,
                 userID: userID
             });
-            setCurrent(steps.length - 1);
+            router.push(`/users/${userID}`);
         } catch (error) {
             showToast("Googleでのサインアップ中にエラーが発生しました。", "error");
         }
@@ -171,13 +171,13 @@ const Register = () => {
     ];
 
     return (
-        <div className="container mx-auto my-10 flex justify-center items-center min-h-screen">
+        <div className="container mx-auto flex justify-center items-center min-h-screen">
             <Head>
                 <title>Register</title>
             </Head>
             <Layout>
                 <Card className="max-w-[400px]">
-                    <Title level={3} className="mb-5 text-center">Login with</Title>
+                    <Title level={3} className="mb-5 text-center">Register with</Title>
                     <Button onClick={handleGoogleSignIn} type="dashed" className="w-full" icon={<FcGoogle className="text-lg" />}>
                         Google
                     </Button>
