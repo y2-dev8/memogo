@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { auth, db } from '@/firebase/firebaseConfig';
-import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { Avatar, VStack, HStack, Divider, Spinner } from '@chakra-ui/react';
 import NextLink from 'next/link';
-import { Empty, Input, Button, message } from 'antd';
+import { Empty, Input, Button, message, Dropdown, Menu, Space } from 'antd';
+import { EllipsisOutlined } from '@ant-design/icons';
 
 interface Comment {
+    id: string;
     memoId: string;
     userId: string;
     text: string;
@@ -28,8 +30,12 @@ const Comments = ({ memoId }: CommentsProps) => {
     const [commentsLoaded, setCommentsLoaded] = useState<boolean>(false);
     const currentUser = auth.currentUser;
 
-    const showMessage = (content: string, type: "success" | "error") => {
-        message[type](content);
+    const showMessage = (content: string, type: "success" | "error" | "loading") => {
+        if (type === "loading") {
+            return message.loading(content, 0);
+        } else {
+            message[type](content);
+        }
     };
 
     const fetchUserDetails = async (userId: string) => {
@@ -57,7 +63,10 @@ const Comments = ({ memoId }: CommentsProps) => {
         try {
             const q = query(collection(db, 'comments'), where('memoId', '==', memoId));
             const querySnapshot = await getDocs(q);
-            const fetchedComments: Comment[] = querySnapshot.docs.map(doc => doc.data() as Comment);
+            const fetchedComments: Comment[] = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }) as Comment);
             const commentsWithUserDetails = await Promise.all(fetchedComments.map(async (comment) => {
                 const userDetails = await fetchUserDetails(comment.userId);
                 return {
@@ -109,6 +118,20 @@ const Comments = ({ memoId }: CommentsProps) => {
         }
     };
 
+    const handleDeleteComment = async (commentId: string) => {
+        const hide = showMessage("コメントを削除中...", "loading");
+        if (typeof hide === 'function') {
+            try {
+                await deleteDoc(doc(db, 'comments', commentId));
+                setComments(comments.filter(c => c.id !== commentId));
+                hide(); // Hide the loading message
+            } catch (error) {
+                hide(); // Hide the loading message even if there's an error
+                showMessage("コメントの削除中にエラーが発生しました。", "error");
+            }
+        }
+    };
+
     return (
         <div className="w-full">
             {currentUser && (
@@ -123,7 +146,7 @@ const Comments = ({ memoId }: CommentsProps) => {
                     </Button>
                 </div>
             )}
-            <div className="space-y-[10px]">
+            <div className="space-y-2.5">
                 {commentsLoaded && comments.length === 0 ? (
                     <div className="w-full flex justify-center">
                         <Empty description="No comments yet." />
@@ -131,25 +154,39 @@ const Comments = ({ memoId }: CommentsProps) => {
                 ) : (
                     comments.map((c, index) => (
                         <>
-                        <div key={index}>
-                            <div className="w-full flex">
+                            <div key={c.id} className="w-full flex">
                                 <div className="flex items-center mr-2.5">
                                     <NextLink href={`/${c.userID}`} passHref>
                                         <Avatar src={c.photoURL} name={c.displayName} size="md" />
                                     </NextLink>
                                 </div>
-                                <div>
-                                    <div className="flex items-center">
-                                        <NextLink href={`/${c.userID}`} passHref>
-                                            <p className="font-bold text-sm">{c.displayName}</p>
-                                        </NextLink>
-                                        <p className="ml-2.5 text-xs text-gray-500 opacity-50">{new Date(c.createdAt.seconds * 1000).toLocaleString()}</p>
+                                <div className="flex-1">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center">
+                                            <NextLink href={`/${c.userID}`} passHref>
+                                                <p className="font-bold text-sm">{c.displayName}</p>
+                                            </NextLink>
+                                            <p className="ml-2.5 text-xs text-gray-500 opacity-50">{new Date(c.createdAt.seconds * 1000).toLocaleString()}</p>
+                                        </div>
+                                        {currentUser?.uid === c.userId && (
+                                            <Dropdown
+                                                overlay={(
+                                                    <Menu>
+                                                        <Menu.Item onClick={() => handleDeleteComment(c.id)}>
+                                                            削除
+                                                        </Menu.Item>
+                                                    </Menu>
+                                                )}
+                                                trigger={['click']}
+                                            >
+                                                <Button type="text" icon={<EllipsisOutlined />} className="ml-auto" />
+                                            </Dropdown>
+                                        )}
                                     </div>
-                                    <p>{c.text}</p>
+                                    <p className="text-sm">{c.text}</p>
                                 </div>
                             </div>
-                        </div>
-                        {index < comments.length - 1 && <Divider />}
+                            {index < comments.length - 1 && <Divider />}
                         </>
                     ))
                 )}
