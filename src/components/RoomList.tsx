@@ -1,12 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { auth, db } from '@/firebase/firebaseConfig';
-import { collection, query, where, getDocs, updateDoc, arrayRemove, doc, getDoc, arrayUnion } from 'firebase/firestore';
-import { Spinner, Text, Heading, useDisclosure, useToast, Avatar, Divider, Button, AlertDialog, AlertDialogBody, AlertDialogHeader, AlertDialogFooter, AlertDialogOverlay, AlertDialogContent, Menu, MenuButton, MenuList, MenuItem, Input } from '@chakra-ui/react';
-import { ChevronDownIcon } from '@chakra-ui/icons';
+import { collection, query, where, getDocs, updateDoc, arrayUnion } from 'firebase/firestore'; // arrayRemove, doc, getDoc, 
+import { Avatar, useDisclosure } from '@chakra-ui/react';
 import NextLink from 'next/link';
-import { FiMinus, FiPlus } from 'react-icons/fi';
 import { useRouter } from 'next/router';
-import { FaMinus } from 'react-icons/fa';
+import { Button, Modal, Input, List, Divider, message, Dropdown, Menu, Typography, Space, Spin } from 'antd';
+import { DownOutlined, PlusOutlined, MinusOutlined } from '@ant-design/icons';
 
 const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: string }) => {
     const [rooms, setRooms] = useState<any[]>([]);
@@ -15,8 +14,9 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
     const { isOpen: isJoinOpen, onOpen: onJoinOpen, onClose: onJoinClose } = useDisclosure();
     const [selectedRoom, setSelectedRoom] = useState<any>(null);
     const [joinGroupID, setJoinGroupID] = useState('');
+    const [joinLoading, setJoinLoading] = useState(false);
     const cancelRef = useRef(null);
-    const toast = useToast();
+    const toast = message;
     const router = useRouter();
 
     useEffect(() => {
@@ -35,56 +35,42 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
         }
     }, [userId]);
 
-    const handleLeaveRoom = async () => {
-        try {
-            if (!selectedRoom?.id) {
-                throw new Error('選択されたルームがありません。');
-            }
+    // const handleLeaveRoom = async () => {
+    //     setLeaveLoading(true);
+    //     try {
+    //         if (!selectedRoom?.id) {
+    //             throw new Error('選択されたルームがありません。');
+    //         }
 
-            const roomDocRef = doc(db, 'groupChat', selectedRoom.id);
-            const roomDocSnapshot = await getDoc(roomDocRef);
+    //         const roomDocRef = doc(db, 'groupChat', selectedRoom.id);
+    //         const roomDocSnapshot = await getDoc(roomDocRef);
 
-            if (!roomDocSnapshot.exists()) {
-                throw new Error('指定されたルームが存在しません。');
-            }
+    //         if (!roomDocSnapshot.exists()) {
+    //             throw new Error('指定されたルームが存在しません。');
+    //         }
 
-            await updateDoc(roomDocRef, {
-                participants: arrayRemove(userId)
-            });
+    //         await updateDoc(roomDocRef, {
+    //             participants: arrayRemove(userId)
+    //         });
 
-            setRooms(prevRooms => prevRooms.filter(room => room.id !== selectedRoom.id));
-            toast({
-                title: 'グループを離脱しました。',
-                description: `${selectedRoom.groupName}から離脱しました`,
-                status: 'success',
-                duration: 5000,
-                isClosable: true,
-            });
-            onClose();
-        } catch (error) {
-            toast({
-                title: 'エラー',
-                description: `グループの離脱に失敗しました。`,
-                status: 'error',
-                duration: 5000,
-                isClosable: true,
-            });
-        }
-    };
+    //         setRooms(prevRooms => prevRooms.filter(room => room.id !== selectedRoom.id));
+    //         toast.success(`${selectedRoom.groupName}から離脱しました`);
+    //         onClose();
+    //     } catch (error) {
+    //         toast.error('グループの離脱に失敗しました。');
+    //     } finally {
+    //         setLeaveLoading(false);
+    //     }
+    // };
 
     const handleJoinGroup = async () => {
+        setJoinLoading(true);
         try {
             const groupIDQuery = query(collection(db, 'groupChat'), where('groupID', '==', joinGroupID));
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (groupIDSnapshot.empty) {
-                toast({
-                    title: 'エラー',
-                    description: 'グループIDが存在しません。',
-                    status: 'error',
-                    duration: 5000,
-                    isClosable: true,
-                });
+                toast.error('グループIDが存在しません。');
                 return;
             }
 
@@ -94,22 +80,13 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
             });
 
             onJoinClose();
-            toast({
-                title: 'グループの参加に成功しました!',
-                status: 'success',
-                duration: 5000,
-                isClosable: true,
-            });
+            toast.success('グループの参加に成功しました!');
             router.push(`/message/${joinGroupID}`);
         } catch (error) {
-            toast({
-                title: 'エラー',
-                description: 'グループの参加に失敗しました。',
-                status: 'error',
-                duration: 5000,
-                isClosable: true,
-            });
+            toast.error('グループの参加に失敗しました。');
             console.error('Error joining group:', error);
+        } finally {
+            setJoinLoading(false);
         }
     };
 
@@ -122,130 +99,104 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
     const currentRoomName = currentRoom?.groupName || "参加しているグループ";
 
     if (loading) {
-        return <div className="w-full min-h-screen md:flex justify-center items-center hidden"><Spinner size="xl" /></div>;
+        return <div className="w-full min-h-screen flex justify-center items-center"><Spin size="large" /></div>;
     }
+
+    const menu = (
+        <Menu>
+            {rooms.length > 0 ? (
+                rooms.map(room => (
+                    <Menu.Item key={room.id}>
+                        <NextLink href={`/message/${room.groupID}`}>
+                            <Space>
+                                <Avatar src="NONE" name={room.groupName} size="sm" rounded="md" />
+                                {room.groupName}
+                            </Space>
+                        </NextLink>
+                    </Menu.Item>
+                ))
+            ) : (
+                <Menu.Item disabled>
+                    参加しているグループが見つかりませんでした。
+                </Menu.Item>
+            )}
+            <Divider />
+            <Menu.Item key="join" onClick={onJoinOpen}>
+                <PlusOutlined /> 参加する
+            </Menu.Item>
+            {/* {currentRoom && (
+                <Menu.Item key="leave" onClick={() => confirmLeaveRoom(currentRoom)} danger>
+                    <MinusOutlined /> {currentRoomName}を離脱する
+                </Menu.Item>
+            )} */}
+        </Menu>
+    );
 
     return (
         <div>
             <div className="mb-10 md:mb-0 hidden md:block md:sticky md:top-10">
-                <Heading size="sm" className="mb-5">参加しているグループ</Heading>
-                <div className="p-3 space-y-3 max-h-80 overflow-y-auto border rounded-md">
-                    {rooms.length > 0 ? (
-                        rooms.map((room, index) => (
-                            <>
-                                <div key={index} className={`flex rounded-md p-[7.5px] ${room.groupID === currentGroup ? 'bg-blue-50' : ''}`}>
-                                    <NextLink href={`/message/${room.groupID}`}>
-                                        <Avatar src="NONE" name={room.groupName} size="sm" rounded="md" />
-                                    </NextLink>
-                                    <div className="ml-2.5 flex flex-col justify-center">
-                                        <NextLink href={`/message/${room.groupID}`}>
-                                            <Text className="text-md font-bold">{room.groupName}</Text>
-                                        </NextLink>
-                                    </div>
-                                    {room.groupID === currentGroup && (
-                                        <Button colorScheme="red" size="sm" variant="link" className="ml-auto" onClick={() => confirmLeaveRoom(room)}><FaMinus /></Button>
-                                    )}
-                                </div>
-                                {index < rooms.length - 1 && <Divider />}
-                            </>
-                        ))
-                    ) : (
-                        <div className="w-full flex justify-center">
-                            <Text className="text-slate-500 mb-5">参加しているグループが見つかりませんでした。</Text>
-                        </div>
+                <Typography.Title level={5}>参加しているグループ</Typography.Title>
+                <List
+                    bordered
+                    dataSource={rooms}
+                    renderItem={(room, index) => (
+                        <List.Item
+                            key={room.id}
+                            // actions={[
+                            //     room.groupID === currentGroup && (
+                            //         <Button
+                            //             type="link"
+                            //             icon={<MinusOutlined />}
+                            //             danger
+                            //             onClick={() => confirmLeaveRoom(room)}
+                            //         />
+                            //     )
+                            // ]}
+                        >
+                            <NextLink href={`/message/${room.groupID}`}>
+                                <Space>
+                                    <Avatar src="NONE" name={room.groupName} size="sm" rounded="md" />
+                                    <Typography.Text>{room.groupName}</Typography.Text>
+                                </Space>
+                            </NextLink>
+                        </List.Item>
                     )}
-                </div>
+                />
             </div>
             <div className="md:hidden fixed top-[60px] left-0 z-40 w-full">
-                <Menu>
-                    <MenuButton as={Button} rightIcon={<ChevronDownIcon />} rounded="none" width="full">
+                <Dropdown overlay={menu} trigger={['click']}>
+                    <Button className="rounded-none" type="primary" block>
                         {currentRoomName}
-                    </MenuButton>
-                    <MenuList>
-                        {rooms.length > 0 ? (
-                            rooms.map(room => (
-                                <MenuItem key={room.id}>
-                                    <NextLink href={`/message/${room.groupID}`}>
-                                        <Avatar src="NONE" name={room.groupName} size="sm" rounded="md" className="mr-2.5" />
-                                    </NextLink>
-                                    <NextLink href={`/message/${room.groupID}`}>
-                                        {room.groupName}
-                                    </NextLink>
-                                </MenuItem>
-                            ))
-                        ) : (
-                            <MenuItem disabled>
-                                参加しているグループが見つかりませんでした。
-                            </MenuItem>
-                        )}
-                        <Divider className='my-2.5' />
-                        <MenuItem px="3" onClick={onJoinOpen}>
-                            <FiPlus className="mr-2.5" />参加する
-                        </MenuItem>
-                        {currentRoom && (
-                            <MenuItem px="3" textColor="red" onClick={() => confirmLeaveRoom(currentRoom)}>
-                                <FiMinus className="mr-2.5" />{currentRoomName}を離脱する
-                            </MenuItem>
-                        )}
-                    </MenuList>
-                </Menu>
+                    </Button>
+                </Dropdown>
             </div>
-
-            <AlertDialog
-                isOpen={isOpen}
-                leastDestructiveRef={cancelRef}
-                onClose={onClose}
-                isCentered
+            {/* <Modal
+                title="グループを離れる"
+                visible={isOpen}
+                onOk={handleLeaveRoom}
+                onCancel={onClose}
+                okText="Leave"
+                okButtonProps={{ danger: true, loading: leaveLoading }}
+                centered
             >
-                <AlertDialogOverlay>
-                    <AlertDialogContent>
-                        <AlertDialogHeader fontSize='lg' fontWeight='bold'>
-                            グループを離れる
-                        </AlertDialogHeader>
-                        <AlertDialogBody>
-                            本当に{selectedRoom?.groupName}を離れますか？
-                        </AlertDialogBody>
-                        <AlertDialogFooter>
-                            <Button ref={cancelRef} onClick={onClose}>
-                                キャンセル
-                            </Button>
-                            <Button colorScheme='red' onClick={handleLeaveRoom} className="ml-3">
-                                離脱
-                            </Button>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialogOverlay>
-            </AlertDialog>
+                本当に{selectedRoom?.groupName}を離れますか？
+            </Modal> */}
 
-            <AlertDialog
-                isOpen={isJoinOpen}
-                leastDestructiveRef={cancelRef}
-                onClose={onJoinClose}
-                isCentered
+            <Modal
+                title="新しいグループに参加する"
+                visible={isJoinOpen}
+                onOk={handleJoinGroup}
+                onCancel={onJoinClose}
+                okText="Join"
+                okButtonProps={{ loading: joinLoading }}
+                centered
             >
-                <AlertDialogOverlay>
-                    <AlertDialogContent>
-                        <AlertDialogHeader fontSize='lg' fontWeight='bold'>
-                            新しいグループに参加する
-                        </AlertDialogHeader>
-                        <AlertDialogBody>
-                            <Input
-                                placeholder="グループID"
-                                value={joinGroupID}
-                                onChange={(e) => setJoinGroupID(e.target.value)}
-                            />
-                        </AlertDialogBody>
-                        <AlertDialogFooter>
-                            <Button ref={cancelRef} onClick={onJoinClose}>
-                                キャンセル
-                            </Button>
-                            <Button colorScheme='teal' onClick={handleJoinGroup} className="ml-3">
-                                参加
-                            </Button>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialogOverlay>
-            </AlertDialog>
+                <Input
+                    placeholder="グループID"
+                    value={joinGroupID}
+                    onChange={(e) => setJoinGroupID(e.target.value)}
+                />
+            </Modal>
         </div>
     );
 };
