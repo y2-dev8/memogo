@@ -156,14 +156,14 @@ const Comments = ({ memoId }: CommentsProps) => {
                         <>
                             <div key={c.id} className="w-full flex">
                                 <div className="flex items-center mr-2.5">
-                                    <NextLink href={`/${c.userID}`} passHref>
+                                    <NextLink href={`/users/${c.userID}`} passHref>
                                         <Avatar src={c.photoURL} name={c.displayName} size="md" />
                                     </NextLink>
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center">
-                                            <NextLink href={`/${c.userID}`} passHref>
+                                            <NextLink href={`/users/${c.userID}`} passHref>
                                                 <p className="font-bold text-sm">{c.displayName}</p>
                                             </NextLink>
                                             <p className="ml-2.5 text-xs text-gray-500 opacity-50">{new Date(c.createdAt.seconds * 1000).toLocaleString()}</p>

@@ -119,7 +119,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
 
     return (
         <div className="w-full">
-            <VStack align="stretch" className="space-y-1 md:mb-5 py-[15px] md:py-0 h-[80vh] overflow-y-auto scrollbar" ref={chatContainerRef}>
+            <VStack align="stretch" className="space-y-1 md:mb-5 pt-[15px] pb-[30px] md:py-0 h-[80vh] overflow-y-auto scrollbar" ref={chatContainerRef}>
                 {messages.length === 0 ? (
                     <div className="w-full h-full flex items-center justify-center">
                         <Empty description="No chat yet." />
