@@ -1,200 +1,211 @@
-import { useState, useEffect, useRef } from 'react';
-import { auth, db, storage } from '@/firebase/firebaseConfig';
-import { collection, addDoc, query, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { Text, VStack, HStack, Link, Avatar } from '@chakra-ui/react';
-import NextLink from 'next/link';
-import { format } from 'date-fns';
-import { Empty, Input, Button, Upload, message, Image } from "antd";
-import { UploadOutlined } from '@ant-design/icons';
-
-interface Message {
-    id: string;
-    message: string;
-    fileURL?: string;
-    fileType?: string;
-    sender: string;
-    timestamp: any;
-}
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
+import { auth, db } from '@/firebase/firebaseConfig';
+import { collection, query, where, getDocs, addDoc, deleteDoc } from 'firebase/firestore';
+import Link from 'next/link';
+import Layout from '@/components/Layout';
+import Head from 'next/head';
+import { Button, Empty, Spin, Image, List, Card } from "antd";
+import { Avatar } from "@chakra-ui/react";
 
 interface User {
-    displayName: string;
     photoURL: string;
+    displayName: string;
+    bio: string;
+    headerPhotoURL?: string;
+    userID: string;
 }
 
-interface ChatComponentProps {
-    groupId: string;
-    currentUser: any;
-    userIDs: { [key: string]: string };
+interface Memo {
+    content: string;
+    uid: string;
+    title: string;
+    description: string;
 }
 
-const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, userIDs }) => {
-    const [messageText, setMessageText] = useState<string>('');
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [file, setFile] = useState<File | null>(null);
-    const [fileURL, setFileURL] = useState<string>('');
-    const [fileType, setFileType] = useState<string>('');
-    const [isSending, setIsSending] = useState<boolean>(false);
-    const [isUploading, setIsUploading] = useState<boolean>(false);
-    const [users, setUsers] = useState<{ [key: string]: User }>({});
-    const chatContainerRef = useRef<HTMLDivElement | null>(null);
+const UserPage = () => {
+    const router = useRouter();
+    const { userId } = router.query;
+    const [user, setUser] = useState<User | null>(null);
+    const [memos, setMemos] = useState<Memo[]>([]);
+    const [isFollowing, setIsFollowing] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [followerCount, setFollowerCount] = useState<number>(0);
+    const currentUser = auth.currentUser;
+    const [isCurrentUser, setIsCurrentUser] = useState<boolean>(false);
 
     useEffect(() => {
-        if (!groupId) return;
-
-        const messagesRef = collection(db, 'groupChat', groupId, 'messages');
-        const q = query(messagesRef, orderBy('timestamp', 'asc'));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const msgs = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            })) as Message[];
-            setMessages(msgs);
-
-            // Scroll to the bottom of the chat
-            scrollToBottom();
-        });
-
-        return () => unsubscribe();
-    }, [groupId]);
-
-    useEffect(() => {
-        if (messages.length > 0) {
-            scrollToBottom();
-            fetchUsers();
-        }
-    }, [messages]);
-
-    const fetchUsers = async () => {
-        const newUsers: { [key: string]: User } = {};
-        for (const msg of messages) {
-            if (!users[msg.sender]) {
-                const userDoc = await getDoc(doc(db, 'users', msg.sender));
-                if (userDoc.exists()) {
-                    newUsers[msg.sender] = userDoc.data() as User;
+        const fetchUser = async () => {
+            if (userId && typeof userId === 'string') {
+                try {
+                    const userQuery = query(collection(db, 'users'), where('userID', '==', userId));
+                    const userSnapshot = await getDocs(userQuery);
+                    if (!userSnapshot.empty) {
+                        const userData = userSnapshot.docs[0].data() as User;
+                        setUser(userData);
+                        setIsCurrentUser(currentUser?.uid === userSnapshot.docs[0].id);
+                        await fetchMemos(userSnapshot.docs[0].id);
+                    } else {
+                        router.push('/404');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    router.push('/500');
                 }
             }
+        };
+
+        const fetchMemos = async (uid: string) => {
+            try {
+                const memosQuery = query(
+                    collection(db, 'memos'), 
+                    where('userId', '==', uid)
+                );
+                const querySnapshot = await getDocs(memosQuery);
+                if (!querySnapshot.empty) {
+                    setMemos(querySnapshot.docs.map(doc => ({ ...doc.data(), uid: doc.id } as Memo)));
+                }
+            } catch (err) {
+                console.error(err);
+                router.push('/500');
+            }
+        };
+
+        const checkFollowingStatus = async () => {
+            if (currentUser && userId && typeof userId === 'string') {
+                try {
+                    const followQuery = query(collection(db, 'follows'), where('followerId', '==', currentUser.uid), where('followingId', '==', userId));
+                    const followSnapshot = await getDocs(followQuery);
+                    if (!followSnapshot.empty) setIsFollowing(true);
+                } catch (err) {
+                    console.error(err);
+                    router.push('/500');
+                }
+            }
+        };
+
+        const fetchFollowerCount = async () => {
+            if (userId && typeof userId === 'string') {
+                try {
+                    const countQuery = query(collection(db, 'follows'), where('followingId', '==', userId));
+                    const querySnapshot = await getDocs(countQuery);
+                    setFollowerCount(querySnapshot.size);
+                } catch (err) {
+                    console.error(err);
+                    router.push('/500');
+                }
+            }
+        };
+
+        const fetchData = async () => {
+            setLoading(true);
+            await fetchUser();
+            await checkFollowingStatus();
+            await fetchFollowerCount();
+            setLoading(false);
+        };
+
+        fetchData();
+    }, [userId, currentUser, router]);
+
+    const handleFollow = async () => {
+        if (currentUser && userId && typeof userId === 'string') {
+            try {
+                await addDoc(collection(db, 'follows'), {
+                    followerId: currentUser.uid,
+                    followingId: userId
+                });
+                setIsFollowing(true);
+                setFollowerCount(prev => prev + 1);
+            } catch (err) {
+                console.error(err);
+                router.push('/500');
+            }
         }
-        setUsers(prevUsers => ({ ...prevUsers, ...newUsers }));
     };
 
-    const scrollToBottom = () => {
-        if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    const handleUnfollow = async () => {
+        if (currentUser && userId && typeof userId === 'string') {
+            try {
+                const unfollowQuery = query(collection(db, 'follows'), where('followerId', '==', currentUser.uid), where('followingId', '==', userId));
+                const querySnapshot = await getDocs(unfollowQuery);
+                querySnapshot.forEach(async (doc) => {
+                    await deleteDoc(doc.ref);
+                });
+                setIsFollowing(false);
+                setFollowerCount(prev => prev - 1);
+            } catch (err) {
+                console.error(err);
+                router.push('/500');
+            }
         }
     };
 
-    const handleSendMessage = async () => {
-        if (!messageText && !fileURL) {
-            message.error('メッセージもしくはファイルが必要です。');
-            return;
-        }
+    if (loading) return <div className="w-full min-h-screen flex justify-center items-center h-screen"><Spin size="large" /></div>;
 
-        setIsSending(true);
-
-        const messagesRef = collection(db, 'groupChat', groupId, 'messages');
-
-        await addDoc(messagesRef, {
-            message: messageText,
-            fileURL,
-            fileType,
-            sender: auth.currentUser?.uid,
-            timestamp: new Date()
-        });
-
-        setMessageText('');
-        setFile(null);
-        setFileURL('');
-        setFileType('');
-        setIsSending(false);
-    };
-
-    const handleBeforeUpload = async (file: File) => {
-        setIsUploading(true);
-        const storageRef = ref(storage, `groupChat/${groupId}/messages/${file.name}`);
-        await uploadBytes(storageRef, file);
-        const fileURL = await getDownloadURL(storageRef);
-        setFile(file);
-        setFileURL(fileURL);
-        setFileType(file.type);
-        setIsUploading(false);
-        return false;
-    };
+    const avatarSrc = user?.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${user?.displayName.length}`;
 
     return (
-        <div className="w-full">
-            <VStack align="stretch" className="space-y-1 mb-5 pb-[50px] md:pb-0 h-[80vh] overflow-y-auto" ref={chatContainerRef}>
-                {messages.length === 0 ? (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <Empty description="No chat yet." />
+        <div className="container mx-auto my-10">
+            <Head><title>{user?.displayName}</title></Head>
+            <Layout>
+                {user?.headerPhotoURL && (
+                    <div className="mb-5">
+                        <Image src={user.headerPhotoURL} className="w-full h-auto" />
                     </div>
-                ) : (
-                    messages.map((msg, index) => {
-                        const user = users[msg.sender];
-                        return (
-                            <div
-                                key={index}
-                                className={`w-fit p-3 rounded-md ${
-                                    msg.sender === auth.currentUser?.uid ? 'lg:mr-5 ml-auto bg-blue-50' : 'bg-slate-50'
-                                }`}
-                            >
-                                <HStack align="start" spacing="3">
-                                    <NextLink href={`/users/${userIDs[msg.sender]}`} passHref>
-                                        <Link>
-                                            <Avatar 
-                                                src={user?.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${user?.displayName.length}`} 
-                                                name={user?.displayName} 
-                                                size="md" 
-                                            />
-                                        </Link>
-                                    </NextLink>
-                                    <div>
-                                        <div className="flex items-center">
-                                            <NextLink href={`/users/${userIDs[msg.sender]}`} passHref>
-                                                <Link fontWeight="bold">{user?.displayName || '匿名'}</Link>
-                                            </NextLink>
-                                            <Text className="ml-2.5 opacity-50 text-xs text-slate-500">{format(new Date(msg.timestamp.toDate()), 'yyyy-MM-dd HH:mm')}</Text>
-                                        </div>
-                                        <Text>{msg.message}</Text>
-                                        {msg.fileURL && (
-                                            msg.fileType?.startsWith('video/') ? (
-                                                <video controls src={msg.fileURL} className='my-[5px] max-w-full md:max-w-[200px] rounded-md' />
-                                            ) : (
-                                                <img src={msg.fileURL} alt="attachment" className='my-[5px] max-w-full md:max-w-[200px] rounded-md' />
-                                            )
-                                        )}
-                                    </div>
-                                </HStack>
-                            </div>
-                        );
-                    })
                 )}
-            </VStack>
-            <div className="w-full space-y-3 md:space-y-0 md:space-x-3 md:flex">
-                <Input
-                    type="text"
-                    value={messageText}
-                    onChange={(e) => setMessageText(e.target.value)}
-                    placeholder="メッセージを入力"
-                />
-                <div className="flex space-x-3">
-                    <Upload beforeUpload={handleBeforeUpload} showUploadList={false}>
-                        <Button icon={<UploadOutlined />} type="dashed" loading={isUploading}>
-                            {file ? 'アップロード済み' : 'アップロード'
-                            }
-                        </Button>
-                    </Upload>
-                    <Button
-                        onClick={handleSendMessage}
-                        type="primary"
-                        loading={isSending}
-                    >
-                        送信する
-                    </Button>
+                <div className="contents lg:flex items-center space-y-5 lg:space-y-0 lg:space-x-5">
+                    <Avatar src={avatarSrc} name={user?.displayName} size="xl" />
+                        <div className="w-full flex items-center">
+                            <div>
+                                <p className="text-lg font-bold">{user?.displayName}</p>
+                                <p className="mt-1.5 text-sm text-gray-500 lg:whitespace-pre-line">{user?.bio}</p>
+                                <p className="text-gray-500 mt-1.5 text-sm"><strong className="font-semibold text-black">{followerCount}</strong> Followers</p>
+                            </div>
+                            <div className="ml-auto">
+                                {!isCurrentUser && (
+                                    <Button
+                                        onClick={isFollowing ? handleUnfollow : handleFollow}
+                                        className="ml-3"
+                                        type={isFollowing ? 'default' : "primary"}
+                                    >
+                                        {isFollowing ? 'Unfollow' : 'Follow'}
+                                    </Button>
+                                )}
+                                {isCurrentUser && (
+                                    <Button className='ml-3' type="dashed">
+                                        <Link href="/settings">Edit profile</Link>
+                                    </Button>
+                                )}
+                        </div>
+                    </div>
                 </div>
-            </div>
+                <div className="mt-10">
+                    {memos.length === 0 ? (
+                        <div className="w-full flex justify-center">
+                            <Empty description="No memos found for this user." />
+                        </div>
+                    ) : (
+                        <List
+                            grid={{ gutter: 16, column: 1 }}
+                            dataSource={memos}
+                            renderItem={memo => (
+                                <List.Item>
+                                    <Link href={`/memo?id=${memo.uid}`}>
+                                        <Card title={memo.title}>
+                                            <Card.Meta
+                                                description={memo.description.length > 100 ? `${memo.description.substring(0, 100)}...` : memo.description}
+                                            />
+                                        </Card>
+                                    </Link>
+                                </List.Item>
+                            )}
+                        />
+                    )}
+                </div>
+            </Layout>
         </div>
     );
 };
 
-export default ChatComponent;
+export default UserPage;
