@@ -1,13 +1,13 @@
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { auth, db } from '@/firebase/firebaseConfig';
 import { collection, addDoc, getDocs, query, where, updateDoc, doc, arrayUnion } from 'firebase/firestore';
-import { Box, Text, VStack, useDisclosure, Heading, Divider, Avatar } from '@chakra-ui/react';
+import { useDisclosure, Image } from '@chakra-ui/react';
 import Layout from '@/components/Layout';
 import RoomList from '@/components/RoomList';
 import { FaPlus } from "react-icons/fa";
 import Head from 'next/head';
-import { Button, Modal, Input, message } from "antd";
+import { Button, Modal, Input, message, Spin } from "antd";
 
 const GroupChatPage = () => {
     const [groupName, setGroupName] = useState('');
@@ -15,6 +15,7 @@ const GroupChatPage = () => {
     const [joinGroupID, setJoinGroupID] = useState('');
     const { isOpen, onOpen, onClose } = useDisclosure();
     const { isOpen: isCreateOpen, onOpen: onCreateOpen, onClose: onCreateClose } = useDisclosure();
+    const [loading, setLoading] = useState<boolean>(true);
     const cancelRef = useRef(null);
     const router = useRouter();
 
@@ -92,6 +93,31 @@ const GroupChatPage = () => {
         }
     };
 
+    useEffect(() => {
+        const checkUserGroups = async () => {
+            if (!auth.currentUser) {
+                setLoading(false);
+                return;
+            }
+
+            const groupsQuery = query(collection(db, 'groups'), where('participants', 'array-contains', auth.currentUser.uid));
+            const groupsSnapshot = await getDocs(groupsQuery);
+
+            if (!groupsSnapshot.empty) {
+                const firstGroup = groupsSnapshot.docs[0].data().groupID;
+                router.push(`/message/${firstGroup}`);
+            } else {
+                setLoading(false);
+            }
+        };
+
+        checkUserGroups();
+    }, [auth.currentUser, router]);
+
+    if (loading) {
+        return <div className="w-full min-h-screen flex justify-center items-center"><Spin size="large" /></div>;
+    }
+
     return (
         <div className="container mx-auto my-10">
             <Head>
@@ -103,8 +129,8 @@ const GroupChatPage = () => {
                         <Button onClick={onCreateOpen} className="w-full" type='primary'>ルームを作成する</Button>
                         <Button onClick={onOpen} className="w-full mt-3 md:mt-0 md:ml-3" type='default'>ルームに参加する</Button>
                     </div>
-                    <div className="w-full">
-                        {auth.currentUser && <RoomList userId={auth.currentUser.uid} currentGroup="None" />}
+                    <div className="flex flex-col justify-center">
+                        <Image src="https://opendoodles.s3-us-west-1.amazonaws.com/clumsy.svg" className="h-80" />
                     </div>
                 </div>
             </Layout>

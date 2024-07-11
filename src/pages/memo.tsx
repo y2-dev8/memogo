@@ -9,6 +9,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Head from 'next/head';
 import { DownOutlined, EllipsisOutlined } from '@ant-design/icons';
+import { FiMoreVertical, FiTrash, FiType } from "react-icons/fi";
 import {
     Heading,
     Text,
@@ -172,10 +173,10 @@ const Memo = () => {
 
     const menu = (
         <Menu>
-            <Menu.Item onClick={showEditModal}>
+            <Menu.Item onClick={showEditModal} icon={<FiType />}>
                 編集
             </Menu.Item>
-            <Menu.Item onClick={showDeleteModal}>
+            <Menu.Item onClick={showDeleteModal} icon={<FiTrash />} danger>
                 削除
             </Menu.Item>
         </Menu>
@@ -199,11 +200,11 @@ const Memo = () => {
                             {memoData.userId !== currentUserId && authorData && (
                                 <Box className="p-3 w-full rounded-md mt-5 border">
                                     <HStack spacing={3} align="center">
-                                        <Link href={`/${authorData.userID}`} passHref>
+                                        <Link href={`/users/${authorData.userID}`} passHref>
                                             <Avatar src={authorData.photoURL} name={authorData.displayName} size="md" />
                                         </Link>
                                         <VStack align="start" spacing={0}>
-                                            <Link href={`/${authorData.userID}`} passHref>
+                                            <Link href={`/users/${authorData.userID}`} passHref>
                                                 <Text fontWeight="bold">{authorData.displayName}</Text>
                                             </Link>
                                         </VStack>
@@ -215,7 +216,7 @@ const Memo = () => {
                             <div className='my-5 flex justify-end'>
                                 <Dropdown overlay={menu} trigger={['click']}>
                                     <Button>
-                                        詳細<EllipsisOutlined />
+                                        詳細<FiMoreVertical />
                                     </Button>
                                 </Dropdown>
                                 <Modal

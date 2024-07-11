@@ -6,6 +6,7 @@ import NextLink from 'next/link';
 import { useRouter } from 'next/router';
 import { Button, Modal, Input, List, message, Drawer, Typography, Space, Spin, Avatar, Tooltip } from 'antd';
 import { PlusOutlined, MenuOutlined } from '@ant-design/icons';
+import { FiChevronLeft } from "react-icons/fi";
 
 const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: string }) => {
     const [rooms, setRooms] = useState<any[]>([]);
@@ -71,10 +72,6 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
     const currentRoom = rooms.find(room => room.groupID === currentGroup);
     const currentRoomName = currentRoom?.groupName || "参加しているグループ";
 
-    if (loading) {
-        return <div className="w-full min-h-screen flex justify-center items-center"><Spin size="large" /></div>;
-    }
-
     const showDrawer = () => {
         setDrawerVisible(true);
     };
@@ -112,7 +109,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                 />
             </div>
             <div className="md:hidden fixed top-[60px] left-0 z-40 w-full">
-                <Button icon={<MenuOutlined />} type="text" onClick={showDrawer} size='large' />
+                <Button icon={<FiChevronLeft className="text-xl" />} type="text" onClick={showDrawer} size='large' />
                 <Drawer
                     title="参加しているグループ"
                     placement="left"
