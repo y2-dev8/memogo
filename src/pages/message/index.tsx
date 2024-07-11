@@ -35,7 +35,7 @@ const GroupChatPage = () => {
         }
 
         try {
-            const groupIDQuery = query(collection(db, 'groupChat'), where('groupID', '==', joinGroupID));
+            const groupIDQuery = query(collection(db, 'groups'), where('groupID', '==', joinGroupID));
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (groupIDSnapshot.empty) {
@@ -69,7 +69,7 @@ const GroupChatPage = () => {
         }
 
         try {
-            const groupIDQuery = query(collection(db, 'groupChat'), where('groupID', '==', groupID));
+            const groupIDQuery = query(collection(db, 'groups'), where('groupID', '==', groupID));
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (!groupIDSnapshot.empty) {
@@ -77,7 +77,7 @@ const GroupChatPage = () => {
                 return;
             }
 
-            await addDoc(collection(db, 'groupChat'), {
+            await addDoc(collection(db, 'groups'), {
                 groupName,
                 groupID,
                 participants: [auth.currentUser?.uid]

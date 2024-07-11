@@ -80,9 +80,9 @@ const GroupChat = () => {
             </Head>
             <div className="flex flex-col md:flex-row">
                 <div className="md:w-[20%] md:mr-5">
-                    <div className="hidden md:block">
+                    {/* <div className="hidden md:block">
                         <Button onClick={() => setIsModalOpen(true)} icon={<PlusOutlined />} className="w-full mb-10" type="primary">参加する</Button>
-                    </div>
+                    </div> */}
                     {auth.currentUser && <RoomList userId={auth.currentUser.uid} currentGroup={groupId as string} />}
                 </div>
                 <div className="md:w-[80%] py-5 md:py-0">

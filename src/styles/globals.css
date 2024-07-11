@@ -74,3 +74,13 @@
       @apply bg-background text-foreground;
     }
   }
+
+  .avatar-circle {
+    border-radius: 50%;
+    transition: border-radius 0.3s ease;
+  }
+
+  .avatar-square {
+      border-radius: 10px;
+      transition: border-radius 0.3s ease;
+  }

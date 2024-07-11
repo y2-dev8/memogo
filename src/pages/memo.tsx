@@ -8,7 +8,7 @@ import BookmarkButton from '../components/BookmarkButton';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Head from 'next/head';
-import { DownOutlined } from '@ant-design/icons';
+import { DownOutlined, EllipsisOutlined } from '@ant-design/icons';
 import {
     Heading,
     Text,
@@ -215,7 +215,7 @@ const Memo = () => {
                             <div className='my-5 flex justify-end'>
                                 <Dropdown overlay={menu} trigger={['click']}>
                                     <Button>
-                                        詳細<DownOutlined />
+                                        詳細<EllipsisOutlined />
                                     </Button>
                                 </Dropdown>
                                 <Modal

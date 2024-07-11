@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { auth, db, storage } from '@/firebase/firebaseConfig';
-import { collection, addDoc, query, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot, doc, getDoc, where } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { Text, VStack, HStack, Link, Avatar } from '@chakra-ui/react';
-import { FaUpload } from 'react-icons/fa';
+import { Text, VStack, HStack, Avatar } from '@chakra-ui/react';
 import NextLink from 'next/link';
 import { format } from 'date-fns';
 import { Empty, Input, Button, Upload, message } from "antd";
@@ -14,9 +13,12 @@ interface Message {
     message: string;
     fileURL?: string;
     sender: string;
-    senderName: string;
-    senderPhotoURL: string;
     timestamp: any;
+}
+
+interface User {
+    displayName: string;
+    photoURL: string;
 }
 
 interface ChatComponentProps {
@@ -32,12 +34,13 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
     const [fileURL, setFileURL] = useState<string>('');
     const [isSending, setIsSending] = useState<boolean>(false);
     const [isUploading, setIsUploading] = useState<boolean>(false);
+    const [users, setUsers] = useState<{ [key: string]: User }>({});
     const chatContainerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         if (!groupId) return;
 
-        const messagesRef = collection(db, 'groupChat', groupId, 'messages');
+        const messagesRef = collection(db, 'groups', groupId, 'messages');
         const q = query(messagesRef, orderBy('timestamp', 'asc'));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const msgs = snapshot.docs.map(doc => ({
@@ -56,8 +59,22 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
     useEffect(() => {
         if (messages.length > 0) {
             scrollToBottom();
+            fetchUsers();
         }
     }, [messages]);
+
+    const fetchUsers = async () => {
+        const newUsers: { [key: string]: User } = {};
+        for (const msg of messages) {
+            if (!users[msg.sender]) {
+                const userDoc = await getDoc(doc(db, 'users', msg.sender));
+                if (userDoc.exists()) {
+                    newUsers[msg.sender] = userDoc.data() as User;
+                }
+            }
+        }
+        setUsers(prevUsers => ({ ...prevUsers, ...newUsers }));
+    };
 
     const scrollToBottom = () => {
         if (chatContainerRef.current) {
@@ -73,14 +90,12 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
 
         setIsSending(true);
 
-        const messagesRef = collection(db, 'groupChat', groupId, 'messages');
+        const messagesRef = collection(db, 'groups', groupId, 'messages');
 
         await addDoc(messagesRef, {
             message: messageText,
             fileURL,
             sender: auth.currentUser?.uid,
-            senderName: currentUser?.displayName || '匿名',
-            senderPhotoURL: currentUser?.photoURL || '',
             timestamp: new Date()
         });
 
@@ -92,7 +107,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
 
     const handleBeforeUpload = async (file: File) => {
         setIsUploading(true);
-        const storageRef = ref(storage, `groupChat/${groupId}/messages/${file.name}`);
+        const storageRef = ref(storage, `groups/${groupId}/messages/${file.name}`);
         await uploadBytes(storageRef, file);
         const fileURL = await getDownloadURL(storageRef);
         setFile(file);
@@ -109,34 +124,39 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
                         <Empty description="No chat yet." />
                     </div>
                 ) : (
-                    messages.map((msg, index) => (
-                        <div
-                            key={index}
-                            className={`w-fit p-3 rounded-md ${
-                                msg.sender === auth.currentUser?.uid ? 'lg:mr-5 ml-auto bg-blue-50' : 'bg-slate-50'
-                            }`}
-                        >
-                            <HStack align="start" spacing="3">
-                                <NextLink href={`/users/${userIDs[msg.sender]}`} passHref>
-                                    <Link>
-                                        <Avatar src={msg.senderPhotoURL} name={msg.senderName} size="md" />
-                                    </Link>
-                                </NextLink>
-                                <div>
-                                    <div className="flex items-center">
-                                        <NextLink href={`/users/${userIDs[msg.sender]}`} passHref>
-                                            <Link fontWeight="bold">{msg.senderName}</Link>
-                                        </NextLink>
-                                        <Text className="ml-2.5 opacity-50 text-xs text-slate-500">{format(new Date(msg.timestamp.toDate()), 'yyyy-MM-dd HH:mm')}</Text>
+                    messages.map((msg, index) => {
+                        const user = users[msg.sender];
+                        return (
+                            <div
+                                key={index}
+                                className={`w-fit p-3 rounded-md ${
+                                    msg.sender === auth.currentUser?.uid ? 'lg:mr-5 ml-auto bg-blue-100' : 'bg-gray-50'
+                                }`}
+                            >
+                                <HStack align="start" spacing="3">
+                                    <NextLink href={`/users/${userIDs[msg.sender]}`} passHref>
+                                        <Avatar
+                                            src={user?.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${user?.displayName.length}`} 
+                                            name={user?.displayName}
+                                            size="md"
+                                        />
+                                    </NextLink>
+                                    <div>
+                                        <div className="flex items-center">
+                                            <NextLink href={`/users/${userIDs[msg.sender]}`} passHref>
+                                                <p className="text-md font-bold">{user?.displayName || '匿名'}</p>
+                                            </NextLink>
+                                            <Text className="ml-2.5 opacity-50 text-xs">{format(new Date(msg.timestamp.toDate()), 'yyyy-MM-dd HH:mm')}</Text>
+                                        </div>
+                                        <Text>{msg.message}</Text>
+                                        {msg.fileURL && (
+                                            <img src={msg.fileURL} alt="attachment" className='my-[5px] max-w-full md:max-w-60 rounded-md' />
+                                        )}
                                     </div>
-                                    <Text>{msg.message}</Text>
-                                    {msg.fileURL && (
-                                        <img src={msg.fileURL} alt="attachment" className='my-[5px] max-w-full md:max-w-[200px] rounded-md' />
-                                    )}
-                                </div>
-                            </HStack>
-                        </div>
-                    ))
+                                </HStack>
+                            </div>
+                        );
+                    })
                 )}
             </VStack>
             <div className="w-full space-y-3 md:space-y-0 md:space-x-3 md:flex">

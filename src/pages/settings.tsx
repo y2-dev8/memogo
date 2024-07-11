@@ -14,6 +14,7 @@ import CropModal from '@/components/settings/CropModal';
 import DeleteAccountDialog from '@/components/settings/DeleteAccountDialog';
 import { Form, Input, Button, Empty, message, Card, Row, Col, Spin, Image, Dropdown, Menu, Upload, UploadProps } from "antd";
 import { UploadOutlined, DeleteOutlined, InboxOutlined } from '@ant-design/icons';
+import { FcGoogle } from "react-icons/fc"
 
 const { TextArea } = Input;
 const { Dragger } = Upload;
@@ -258,7 +259,7 @@ const Settings = () => {
                                     <p className="ant-upload-drag-icon">
                                         <InboxOutlined />
                                     </p>
-                                    <p className="ant-upload-text">クリックまたはドラッグしてヘッダー画像をアップロード</p>
+                                    <p className="ant-upload-text">クリックまたはドラッグしてヘッダーをアップロード</p>
                                     <p className="ant-upload-hint">
                                         企業データやその他の禁止ファイルのアップロードは禁止されています。
                                     </p>
@@ -302,7 +303,7 @@ const Settings = () => {
                     <Row gutter={[16, 16]}>
                         <Col span={24} md={12}>
                             <Card title="アカウント">
-                                <Button onClick={linkGoogleAccount} loading={processing.google} type="default" block>
+                                <Button onClick={linkGoogleAccount} loading={processing.google} type="default" icon={<FcGoogle className="text-lg" />} block>
                                     Googleアカウントと連携する
                                 </Button>
                             </Card>

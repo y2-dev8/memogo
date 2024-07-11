@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { auth, db } from '@/firebase/firebaseConfig';
-import { collection, query, where, getDocs, updateDoc, arrayUnion } from 'firebase/firestore'; // arrayRemove, doc, getDoc, 
-import { Avatar, useDisclosure } from '@chakra-ui/react';
+import { collection, query, where, getDocs, updateDoc, arrayUnion } from 'firebase/firestore';
+import { useDisclosure } from '@chakra-ui/react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
-import { Button, Modal, Input, List, Divider, message, Dropdown, Menu, Typography, Space, Spin } from 'antd';
-import { DownOutlined, PlusOutlined, MinusOutlined } from '@ant-design/icons';
+import { Button, Modal, Input, List, message, Dropdown, Menu, Typography, Space, Spin, Avatar, Tooltip } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 
 const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: string }) => {
     const [rooms, setRooms] = useState<any[]>([]);
@@ -22,7 +22,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
     useEffect(() => {
         const fetchRooms = async () => {
             setLoading(true);
-            const roomsRef = collection(db, 'groupChat');
+            const roomsRef = collection(db, 'groups');
             const q = query(roomsRef, where('participants', 'array-contains', userId));
             const querySnapshot = await getDocs(q);
             const roomList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -35,38 +35,10 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
         }
     }, [userId]);
 
-    // const handleLeaveRoom = async () => {
-    //     setLeaveLoading(true);
-    //     try {
-    //         if (!selectedRoom?.id) {
-    //             throw new Error('選択されたルームがありません。');
-    //         }
-
-    //         const roomDocRef = doc(db, 'groupChat', selectedRoom.id);
-    //         const roomDocSnapshot = await getDoc(roomDocRef);
-
-    //         if (!roomDocSnapshot.exists()) {
-    //             throw new Error('指定されたルームが存在しません。');
-    //         }
-
-    //         await updateDoc(roomDocRef, {
-    //             participants: arrayRemove(userId)
-    //         });
-
-    //         setRooms(prevRooms => prevRooms.filter(room => room.id !== selectedRoom.id));
-    //         toast.success(`${selectedRoom.groupName}から離脱しました`);
-    //         onClose();
-    //     } catch (error) {
-    //         toast.error('グループの離脱に失敗しました。');
-    //     } finally {
-    //         setLeaveLoading(false);
-    //     }
-    // };
-
     const handleJoinGroup = async () => {
         setJoinLoading(true);
         try {
-            const groupIDQuery = query(collection(db, 'groupChat'), where('groupID', '==', joinGroupID));
+            const groupIDQuery = query(collection(db, 'groups'), where('groupID', '==', joinGroupID));
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (groupIDSnapshot.empty) {
@@ -102,86 +74,79 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
         return <div className="w-full min-h-screen flex justify-center items-center"><Spin size="large" /></div>;
     }
 
-    const menu = (
-        <Menu>
-            {rooms.length > 0 ? (
-                rooms.map(room => (
-                    <Menu.Item key={room.id}>
-                        <NextLink href={`/message/${room.groupID}`}>
-                            <Space>
-                                <Avatar src="NONE" name={room.groupName} size="sm" rounded="md" />
-                                {room.groupName}
-                            </Space>
-                        </NextLink>
-                    </Menu.Item>
-                ))
-            ) : (
-                <Menu.Item disabled>
-                    参加しているグループが見つかりませんでした。
-                </Menu.Item>
-            )}
-            <Divider />
-            <Menu.Item key="join" onClick={onJoinOpen}>
-                <PlusOutlined /> 参加する
-            </Menu.Item>
-            {/* {currentRoom && (
-                <Menu.Item key="leave" onClick={() => confirmLeaveRoom(currentRoom)} danger>
-                    <MinusOutlined /> {currentRoomName}を離脱する
-                </Menu.Item>
-            )} */}
-        </Menu>
-    );
-
     return (
         <div>
-            <div className="mb-10 md:mb-0 hidden md:block md:sticky md:top-10">
-                <Typography.Title level={5}>参加しているグループ</Typography.Title>
+            <div className="mb-10 md:mb-0 hidden md:block md:sticky">
                 <List
-                    bordered
-                    dataSource={rooms}
+                    dataSource={[...rooms, { isJoinItem: true }]}
                     renderItem={(room, index) => (
-                        <List.Item
-                            key={room.id}
-                            // actions={[
-                            //     room.groupID === currentGroup && (
-                            //         <Button
-                            //             type="link"
-                            //             icon={<MinusOutlined />}
-                            //             danger
-                            //             onClick={() => confirmLeaveRoom(room)}
-                            //         />
-                            //     )
-                            // ]}
-                        >
-                            <NextLink href={`/message/${room.groupID}`}>
-                                <Space>
-                                    <Avatar src="NONE" name={room.groupName} size="sm" rounded="md" />
-                                    <Typography.Text>{room.groupName}</Typography.Text>
-                                </Space>
-                            </NextLink>
+                        <List.Item key={room.id || 'join'} style={{ borderBottom: 'none' }}>
+                            {room.isJoinItem ? (
+                                <div>
+                                    <Avatar icon={<PlusOutlined />} onClick={onJoinOpen} size="large" className="cursor-pointer bg-gray-100 text-blue-500" />
+                                {/* <Button
+                                    type="dashed"
+                                    className="w-full flex justify-center items-center"
+                                    onClick={onJoinOpen}
+                                >
+                                    <PlusOutlined />
+                                </Button> */}
+                                </div>
+                            ) : (
+                                <Tooltip title={room.groupName} placement="right">
+                                    <NextLink href={`/message/${room.groupID}`}>
+                                        <Space>
+                                            <Avatar
+                                                src={`https://api.dicebear.com/9.x/shapes/svg?seed=${room.groupName.length}`}
+                                                className={room.groupID === currentGroup ? 'avatar-square' : 'avatar-circle'}
+                                                size="large"
+                                            />
+                                            {/* {room.groupID === currentGroup && (
+                                                <Typography.Text className="font-bold hidden xl:block">
+                                                    {room.groupName}
+                                                </Typography.Text>
+                                            )} */}
+                                        </Space>
+                                    </NextLink>
+                                </Tooltip>
+                            )}
                         </List.Item>
                     )}
                 />
             </div>
             <div className="md:hidden fixed top-[60px] left-0 z-40 w-full">
-                <Dropdown overlay={menu} trigger={['click']}>
+                <Dropdown overlay={
+                    <Menu>
+                        {rooms.map(room => (
+                            <Menu.Item key={room.id}>
+                                <Tooltip title={room.groupName} placement="right">
+                                    <NextLink href={`/message/${room.groupID}`}>
+                                        <Space>
+                                            <Avatar
+                                                src={`https://api.dicebear.com/9.x/shapes/svg?seed=${room.groupName.length}`}
+                                                className={room.groupID === currentGroup ? 'avatar-square' : 'avatar-circle'}
+                                                size="large"
+                                            />
+                                            {/* {room.groupID === currentGroup && (
+                                                <Typography.Text className="font-bold">
+                                                    {room.groupName}
+                                                </Typography.Text>
+                                            )} */}
+                                        </Space>
+                                    </NextLink>
+                                </Tooltip>
+                            </Menu.Item>
+                        ))}
+                        <Menu.Item key="join" onClick={onJoinOpen}>
+                            <PlusOutlined /> 参加する
+                        </Menu.Item>
+                    </Menu>
+                } trigger={['click']}>
                     <Button className="rounded-none" type="primary" block>
                         {currentRoomName}
                     </Button>
                 </Dropdown>
             </div>
-            {/* <Modal
-                title="グループを離れる"
-                visible={isOpen}
-                onOk={handleLeaveRoom}
-                onCancel={onClose}
-                okText="Leave"
-                okButtonProps={{ danger: true, loading: leaveLoading }}
-                centered
-            >
-                本当に{selectedRoom?.groupName}を離れますか？
-            </Modal> */}
-
             <Modal
                 title="新しいグループに参加する"
                 visible={isJoinOpen}
