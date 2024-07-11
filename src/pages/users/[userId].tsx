@@ -146,6 +146,8 @@ const UserPage = () => {
     if (error) return <div className="text-red-500">{error}</div>;
     if (!user) return <div>ユーザーが見つかりませんでした。</div>;
 
+    const avatarSrc = user.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${user.displayName.length}`;
+
     return (
         <div className="container mx-auto my-10">
             <Head><title>{user.displayName}</title></Head>
@@ -156,7 +158,7 @@ const UserPage = () => {
                     </div>
                 )}
                 <div className="contents lg:flex items-center space-y-3 lg:space-y-0 lg:space-x-3">
-                    <Avatar src={user.photoURL} name={user.displayName} size="lg" />
+                    <Avatar src={avatarSrc} name={user.displayName} size="lg" />
                         <div className="w-full flex items-center">
                             <div>
                                 <p className="text-lg font-bold">{user.displayName}</p>

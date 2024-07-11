@@ -12,9 +12,11 @@ import getCroppedImg from "@/utils/cropImage";
 import FileInput from '@/components/settings/FileInput';
 import CropModal from '@/components/settings/CropModal';
 import DeleteAccountDialog from '@/components/settings/DeleteAccountDialog';
-import { Form, Input, Button, Empty, message, Card, Row, Col, Spin, Image } from "antd";
+import { Form, Input, Button, Empty, message, Card, Row, Col, Spin, Image, Dropdown, Menu, Upload, UploadProps } from "antd";
+import { UploadOutlined, DeleteOutlined, InboxOutlined } from '@ant-design/icons';
 
 const { TextArea } = Input;
+const { Dragger } = Upload;
 
 const Settings = () => {
     useAuthRedirect();
@@ -141,6 +143,7 @@ const Settings = () => {
             setProcessing(prev => ({ ...prev, profile: true }));
             await updateDoc(docRef, updatedData);
 
+            setDisplayName(values.displayName);  // Update the displayName state
             setProcessing(prev => ({ ...prev, profile: false }));
             showMessage("プロフィールが更新されました。", "success");
         }
@@ -167,7 +170,7 @@ const Settings = () => {
             setProcessing(prev => ({ ...prev, google: true }));
             await signInWithPopup(auth, provider);
             setProcessing(prev => ({ ...prev, google: false }));
-            showMessage("Googleアカウントとの連携に成功しました。", "success");
+            showMessage("Googleアカウントと連携しました。", "success");
         } catch (error) {
             console.error(error);
             setProcessing(prev => ({ ...prev, google: false }));
@@ -194,7 +197,48 @@ const Settings = () => {
         }
     };
 
+    const deleteAvatarImage = async () => {
+        if (currentUser && photoURL) {
+            const fileRef = ref(storage, `profilePictures/${currentUser.uid}/avatar.jpg`);
+            try {
+                setProcessing(prev => ({ ...prev, deleteHeader: true }));
+                await deleteObject(fileRef);
+                const docRef = doc(db, 'users', currentUser.uid);
+                await updateDoc(docRef, { photoURL: '' });
+                setPhotoURL('');
+                setProcessing(prev => ({ ...prev, deleteHeader: false }));
+                showMessage("アバター画像が削除されました。", "success");
+            } catch (error) {
+                console.error(error);
+                setProcessing(prev => ({ ...prev, deleteHeader: false }));
+                showMessage("アバター画像を削除することに失敗しました。", "error");
+            }
+        }
+    };
+
+    const avatarMenu = (
+        <Menu>
+            <Menu.Item key="upload" icon={<UploadOutlined />} onClick={() => avatarFileInput.current?.click()}>
+                アップロード
+            </Menu.Item>
+            <Menu.Item key="delete" icon={<DeleteOutlined />} onClick={deleteAvatarImage} danger>
+                削除
+            </Menu.Item>
+        </Menu>
+    );
+
     if (loading) return <div className="w-full min-h-screen flex justify-center items-center"><Spin size="large" /></div>;
+
+    const avatarSrc = photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${displayName.length}`;
+
+    const uploadHeaderProps: UploadProps = {
+        beforeUpload: (file: File) => {
+            setHeaderFile(file);
+            setCroppingHeader(true);
+            return false;
+        },
+        showUploadList: false,
+    };
 
     return (
         <div className="container mx-auto my-10">
@@ -210,9 +254,15 @@ const Settings = () => {
                             {headerPhotoURL ? (
                                 <Image src={headerPhotoURL} />
                             ) : (
-                                <div className="w-full h-[100px] flex items-center justify-center cursor-pointer rounded-md border overflow-hidden" onClick={() => headerFileInput.current?.click()}>
-                                    <Empty description="ヘッダーを設定する" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                                </div>
+                                <Dragger {...uploadHeaderProps}>
+                                    <p className="ant-upload-drag-icon">
+                                        <InboxOutlined />
+                                    </p>
+                                    <p className="ant-upload-text">クリックまたはドラッグしてヘッダー画像をアップロード</p>
+                                    <p className="ant-upload-hint">
+                                        企業データやその他の禁止ファイルのアップロードは禁止されています。
+                                    </p>
+                                </Dragger>
                             )}
                             {headerPhotoURL && (
                                 <Button onClick={deleteHeaderImage} loading={processing.deleteHeader} danger>
@@ -221,7 +271,9 @@ const Settings = () => {
                             )}
                         </div>
                         <div className="flex flex-col lg:flex-row space-y-3 lg:space-y-0 lg:space-x-3">
-                            <Avatar src={photoURL} name={displayName} size="lg" className="cursor-pointer" onClick={() => avatarFileInput.current?.click()} />
+                            <Dropdown overlay={avatarMenu} trigger={['click']}>
+                                <Avatar src={avatarSrc} name={displayName} size="lg" className="cursor-pointer" />
+                            </Dropdown>
                             <div className='w-full flex flex-col'>
                                 <Form
                                     name="profile"
@@ -231,10 +283,10 @@ const Settings = () => {
                                     layout="vertical"
                                 >
                                     <Form.Item label="表示名" name="displayName" colon={false} rules={[{ required: true, message: '表示名を入力してください' }]}>
-                                        <Input />
+                                        <Input placeholder='表示される名前' />
                                     </Form.Item>
                                     <Form.Item label="自己紹介" name="bio" colon={false}>
-                                        <TextArea rows={3} />
+                                        <TextArea rows={3} placeholder='あなたについて' />
                                     </Form.Item>
                                     <Form.Item className='flex justify-center'>
                                         <Button type="primary" htmlType="submit" loading={processing.profile}>
