@@ -6,7 +6,6 @@ import { Text, VStack, HStack, Avatar } from '@chakra-ui/react';
 import NextLink from 'next/link';
 import { format } from 'date-fns';
 import { Empty, Input, Button, Upload, message } from "antd";
-import { UploadOutlined } from '@ant-design/icons';
 import { FiUpload, FiNavigation } from "react-icons/fi";
 
 interface Message {
@@ -117,47 +116,73 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
         return false;
     };
 
+    const groupMessagesByDate = (messages: Message[]) => {
+        const groupedMessages: { [key: string]: Message[] } = {};
+
+        messages.forEach((message) => {
+            const dateKey = format(new Date(message.timestamp.toDate()), 'yyyy-MM-dd');
+            if (!groupedMessages[dateKey]) {
+                groupedMessages[dateKey] = [];
+            }
+            groupedMessages[dateKey].push(message);
+        });
+
+        return groupedMessages;
+    };
+
+    const groupedMessages = groupMessagesByDate(messages);
+
     return (
         <div className="w-full">
-            <VStack align="stretch" className="space-y-1 md:mb-5 pt-[15px] pb-[65px] md:py-0 h-[80vh] overflow-y-auto scrollbar" ref={chatContainerRef}>
+            <VStack align="stretch" className="md:mb-5 pt-[15px] pb-[65px] md:py-0 h-[80vh] overflow-y-auto scrollbar" ref={chatContainerRef}>
                 {messages.length === 0 ? (
                     <div className="w-full h-full flex items-center justify-center">
                         <Empty description="No chat yet." />
                     </div>
                 ) : (
-                    messages.map((msg, index) => {
-                        const user = users[msg.sender];
-                        return (
-                            <div
-                                key={index}
-                                className={`w-fit p-3 rounded-md ${
-                                    msg.sender === auth.currentUser?.uid ? 'ml-auto bg-blue-100' : 'bg-gray-50'
-                                }`}
-                            >
-                                <HStack align="start" spacing="3">
-                                    <NextLink href={`/users/${userIDs[msg.sender]}`} passHref>
-                                        <Avatar
-                                            src={user?.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${user?.displayName.length}`} 
-                                            name={user?.displayName}
-                                            size="md"
-                                        />
-                                    </NextLink>
-                                    <div>
-                                        <div className="flex items-center">
-                                            <NextLink href={`/users/${userIDs[msg.sender]}`} passHref>
-                                                <p className="text-md font-bold">{user?.displayName || '匿名'}</p>
-                                            </NextLink>
-                                            <Text className="ml-2.5 opacity-50 text-xs">{format(new Date(msg.timestamp.toDate()), 'yyyy-MM-dd HH:mm')}</Text>
-                                        </div>
-                                        <Text>{msg.message}</Text>
-                                        {msg.fileURL && (
-                                            <img src={msg.fileURL} alt="attachment" className='my-[5px] max-w-full md:max-w-60 rounded-md' />
-                                        )}
-                                    </div>
-                                </HStack>
+                    Object.keys(groupedMessages).map((dateKey) => (
+                        <div key={dateKey}>
+                            <div className="text-center my-2.5 text-gray-500">
+                                {format(new Date(dateKey), 'MMMM dd')}
                             </div>
-                        );
-                    })
+                            {groupedMessages[dateKey].map((msg, index) => {
+                                const user = users[msg.sender];
+                                return (
+                                    <div key={msg.id} className="mb-3">
+                                        <div
+                                            className={`w-fit p-3 rounded-md ${
+                                                msg.sender === auth.currentUser?.uid ? 'ml-auto bg-blue-100' : 'bg-gray-50'
+                                            }`}
+                                        >
+                                            <HStack align="start" spacing="3">
+                                                <NextLink href={`/users/${userIDs[msg.sender]}`} passHref>
+                                                    <Avatar
+                                                        src={user?.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${user?.displayName.length}`} 
+                                                        name={user?.displayName}
+                                                        size="md"
+                                                    />
+                                                </NextLink>
+                                                <div>
+                                                    <div className="flex items-center">
+                                                        <NextLink href={`/users/${userIDs[msg.sender]}`} passHref>
+                                                            <p className="text-md font-bold">{user?.displayName || '匿名'}</p>
+                                                        </NextLink>
+                                                        <Text className="ml-2.5 opacity-50 text-xs">
+                                                            {format(new Date(msg.timestamp.toDate()), 'HH:mm')}
+                                                        </Text>
+                                                    </div>
+                                                    <Text>{msg.message}</Text>
+                                                    {msg.fileURL && (
+                                                        <img src={msg.fileURL} alt="attachment" className='my-[5px] max-w-full md:max-w-60 rounded-md' />
+                                                    )}
+                                                </div>
+                                            </HStack>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ))
                 )}
             </VStack>
             <div
@@ -172,7 +197,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
                 <div className="hidden md:flex space-x-3">
                     <Upload beforeUpload={handleBeforeUpload} showUploadList={false}>
                         <Button icon={<FiUpload />} type="dashed" loading={isUploading}>
-                                {file ? 'アップロード済み' : 'アップロード'}
+                            {file ? 'アップロード済み' : 'アップロード'}
                         </Button>
                     </Upload>
                     <Button onClick={handleSendMessage} type="primary" loading={isSending}>
