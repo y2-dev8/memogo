@@ -84,19 +84,22 @@ const Following = () => {
             <Layout>
                 {following.length > 0 ? (
                     <div className="space-y-3">
-                        {following.map((user, index) => (
-                            <div key={user.uid}>
-                                <Flex align="center">
-                                    <Link href={`/users/${user.userID}`} passHref>
-                                        <Avatar src={user.photoURL} size="md" name={user.displayName} className="mr-3" />
-                                    </Link>
-                                    <Link href={`/users/${user.userID}`} className="hover:text-black font-bold text-md" passHref>
-                                        {user.displayName}
-                                    </Link>
-                                </Flex>
-                                {index < following.length - 1 && <Divider />}
-                            </div>
-                        ))}
+                        {following.map((user, index) => {
+                            const avatarSrc = user.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${user.displayName.length}`;
+                            return (
+                                <div key={user.uid}>
+                                    <Flex align="center">
+                                        <Link href={`/users/${user.userID}`} passHref>
+                                            <Avatar src={avatarSrc} size="md" name={user.displayName} className="mr-5" />
+                                        </Link>
+                                        <Link href={`/users/${user.userID}`} className="hover:text-black font-bold text-md" passHref>
+                                            {user.displayName}
+                                        </Link>
+                                    </Flex>
+                                    {index < following.length - 1 && <Divider />}
+                                </div>
+                            );
+                        })}
                     </div>
                 ) : (
                     <div className="w-full flex justify-center">
