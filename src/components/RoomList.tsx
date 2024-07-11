@@ -4,14 +4,15 @@ import { collection, query, where, getDocs, updateDoc, arrayUnion } from 'fireba
 import { useDisclosure } from '@chakra-ui/react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
-import { Button, Modal, Input, List, message, Dropdown, Menu, Typography, Space, Spin, Avatar, Tooltip } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Button, Modal, Input, List, message, Drawer, Typography, Space, Spin, Avatar, Tooltip } from 'antd';
+import { PlusOutlined, MenuOutlined } from '@ant-design/icons';
 
 const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: string }) => {
     const [rooms, setRooms] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const { isOpen, onOpen, onClose } = useDisclosure();
     const { isOpen: isJoinOpen, onOpen: onJoinOpen, onClose: onJoinClose } = useDisclosure();
+    const [drawerVisible, setDrawerVisible] = useState(false);
     const [selectedRoom, setSelectedRoom] = useState<any>(null);
     const [joinGroupID, setJoinGroupID] = useState('');
     const [joinLoading, setJoinLoading] = useState(false);
@@ -74,23 +75,24 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
         return <div className="w-full min-h-screen flex justify-center items-center"><Spin size="large" /></div>;
     }
 
+    const showDrawer = () => {
+        setDrawerVisible(true);
+    };
+
+    const closeDrawer = () => {
+        setDrawerVisible(false);
+    };
+
     return (
         <div>
-            <div className="mb-10 md:mb-0 hidden md:block md:sticky">
+            <div className="hidden md:block">
                 <List
                     dataSource={[...rooms, { isJoinItem: true }]}
                     renderItem={(room, index) => (
-                        <List.Item key={room.id || 'join'} style={{ borderBottom: 'none' }}>
+                        <List.Item key={room.id || 'join'} style={{ borderBottom: 'none', paddingTop: 0, paddingBottom: "1em" }}>
                             {room.isJoinItem ? (
                                 <div>
                                     <Avatar icon={<PlusOutlined />} onClick={onJoinOpen} size="large" className="cursor-pointer bg-gray-100 text-blue-500" />
-                                {/* <Button
-                                    type="dashed"
-                                    className="w-full flex justify-center items-center"
-                                    onClick={onJoinOpen}
-                                >
-                                    <PlusOutlined />
-                                </Button> */}
                                 </div>
                             ) : (
                                 <Tooltip title={room.groupName} placement="right">
@@ -101,11 +103,6 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                                                 className={room.groupID === currentGroup ? 'avatar-square' : 'avatar-circle'}
                                                 size="large"
                                             />
-                                            {/* {room.groupID === currentGroup && (
-                                                <Typography.Text className="font-bold hidden xl:block">
-                                                    {room.groupName}
-                                                </Typography.Text>
-                                            )} */}
                                         </Space>
                                     </NextLink>
                                 </Tooltip>
@@ -115,11 +112,22 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                 />
             </div>
             <div className="md:hidden fixed top-[60px] left-0 z-40 w-full">
-                <Dropdown overlay={
-                    <Menu>
-                        {rooms.map(room => (
-                            <Menu.Item key={room.id}>
-                                <Tooltip title={room.groupName} placement="right">
+                <Button icon={<MenuOutlined />} type="text" onClick={showDrawer} size='large' />
+                <Drawer
+                    title="参加しているグループ"
+                    placement="left"
+                    onClose={closeDrawer}
+                    visible={drawerVisible}
+                >
+                    <List
+                        dataSource={[...rooms, { isJoinItem: true }]}
+                        renderItem={(room, index) => (
+                            <List.Item key={room.id || 'join'} style={{ borderBottom: 'none', paddingTop: 0, paddingBottom: "1em" }}>
+                                {room.isJoinItem ? (
+                                    <div>
+                                        <Avatar icon={<PlusOutlined />} onClick={onJoinOpen} size="large" className="cursor-pointer bg-gray-100 text-blue-500" />
+                                    </div>
+                                ) : (
                                     <NextLink href={`/message/${room.groupID}`}>
                                         <Space>
                                             <Avatar
@@ -127,25 +135,16 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                                                 className={room.groupID === currentGroup ? 'avatar-square' : 'avatar-circle'}
                                                 size="large"
                                             />
-                                            {/* {room.groupID === currentGroup && (
-                                                <Typography.Text className="font-bold">
-                                                    {room.groupName}
-                                                </Typography.Text>
-                                            )} */}
+                                            <Typography.Text className="font-bold">
+                                                {room.groupName}
+                                            </Typography.Text>
                                         </Space>
                                     </NextLink>
-                                </Tooltip>
-                            </Menu.Item>
-                        ))}
-                        <Menu.Item key="join" onClick={onJoinOpen}>
-                            <PlusOutlined /> 参加する
-                        </Menu.Item>
-                    </Menu>
-                } trigger={['click']}>
-                    <Button className="rounded-none" type="primary" block>
-                        {currentRoomName}
-                    </Button>
-                </Dropdown>
+                                )}
+                            </List.Item>
+                        )}
+                    />
+                </Drawer>
             </div>
             <Modal
                 title="新しいグループに参加する"

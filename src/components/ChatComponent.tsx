@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { auth, db, storage } from '@/firebase/firebaseConfig';
-import { collection, addDoc, query, orderBy, onSnapshot, doc, getDoc, where } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Text, VStack, HStack, Avatar } from '@chakra-ui/react';
 import NextLink from 'next/link';
 import { format } from 'date-fns';
 import { Empty, Input, Button, Upload, message } from "antd";
 import { UploadOutlined } from '@ant-design/icons';
+import { FiUpload, FiNavigation } from "react-icons/fi";
 
 interface Message {
     id: string;
@@ -118,7 +119,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
 
     return (
         <div className="w-full">
-            <VStack align="stretch" className="space-y-1 mb-5 pb-[50px] md:pb-0 h-[80vh] overflow-y-auto" ref={chatContainerRef}>
+            <VStack align="stretch" className="space-y-1 md:mb-5 py-[15px] md:py-0 h-[80vh] overflow-y-auto scrollbar" ref={chatContainerRef}>
                 {messages.length === 0 ? (
                     <div className="w-full h-full flex items-center justify-center">
                         <Empty description="No chat yet." />
@@ -130,7 +131,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
                             <div
                                 key={index}
                                 className={`w-fit p-3 rounded-md ${
-                                    msg.sender === auth.currentUser?.uid ? 'lg:mr-5 ml-auto bg-blue-100' : 'bg-gray-50'
+                                    msg.sender === auth.currentUser?.uid ? 'ml-auto bg-blue-100' : 'bg-gray-50'
                                 }`}
                             >
                                 <HStack align="start" spacing="3">
@@ -159,27 +160,30 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
                     })
                 )}
             </VStack>
-            <div className="w-full space-y-3 md:space-y-0 md:space-x-3 md:flex">
+            <div
+                className="w-full space-x-3 flex fixed md:static bottom-0 bg-white left-0 border-t md:border-none p-[12.5px] md:p-0"
+            >
                 <Input
                     type="text"
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}
                     placeholder="メッセージを入力"
                 />
-                <div className="flex space-x-3">
+                <div className="hidden md:flex space-x-3">
                     <Upload beforeUpload={handleBeforeUpload} showUploadList={false}>
-                        <Button icon={<UploadOutlined />} type="dashed" loading={isUploading}>
-                            {file ? 'アップロード済み' : 'アップロード'
-                            }
+                        <Button icon={<FiUpload />} type="dashed" loading={isUploading}>
+                                {file ? 'アップロード済み' : 'アップロード'}
                         </Button>
                     </Upload>
-                    <Button
-                        onClick={handleSendMessage}
-                        type="primary"
-                        loading={isSending}
-                    >
+                    <Button onClick={handleSendMessage} type="primary" loading={isSending}>
                         送信する
                     </Button>
+                </div>
+                <div className='flex md:hidden space-x-3'>
+                    <Upload beforeUpload={handleBeforeUpload} showUploadList={false}>
+                        <Button icon={<FiUpload />} type="dashed" loading={isUploading} />
+                    </Upload>
+                    <Button icon={<FiNavigation />} onClick={handleSendMessage} type="primary" loading={isSending} />
                 </div>
             </div>
         </div>

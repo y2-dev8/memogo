@@ -6,7 +6,6 @@ import { Button, Spin, Input, message, Modal } from 'antd';
 import RoomList from '@/components/RoomList';
 import ChatComponent from '@/components/ChatComponent';
 import Head from 'next/head';
-import { PlusOutlined } from "@ant-design/icons"
 
 const GroupChat = () => {
     const router = useRouter();
@@ -74,26 +73,18 @@ const GroupChat = () => {
     }
 
     return (
-        <div className='w-[90%] mx-auto my-10'>
+        <div className='w-[90%] mx-auto md:my-10'>
             <Head>
                 <title>Message</title>
             </Head>
             <div className="flex flex-col md:flex-row">
-                <div className="md:w-[20%] md:mr-5">
-                    {/* <div className="hidden md:block">
-                        <Button onClick={() => setIsModalOpen(true)} icon={<PlusOutlined />} className="w-full mb-10" type="primary">参加する</Button>
-                    </div> */}
-                    {auth.currentUser && <RoomList userId={auth.currentUser.uid} currentGroup={groupId as string} />}
-                </div>
-                <div className="md:w-[80%] py-5 md:py-0">
+                {auth.currentUser && <RoomList userId={auth.currentUser.uid} currentGroup={groupId as string} />}
+                <div className="w-full md:ml-5">
                     {groupId && currentUser && (
-                        <>
-                            <ChatComponent groupId={groupId as string} currentUser={currentUser} userIDs={userIDs} />
-                        </>
+                        <ChatComponent groupId={groupId as string} currentUser={currentUser} userIDs={userIDs} />
                     )}
                 </div>
             </div>
-
             <Modal
                 title="新しいグループに参加する"
                 visible={isModalOpen}
