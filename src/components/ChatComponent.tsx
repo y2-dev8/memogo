@@ -6,7 +6,8 @@ import { Text, VStack, HStack, Avatar } from '@chakra-ui/react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { Empty, Input, Button, Upload, message, Image, Divider } from "antd";
-import { FiUpload, FiNavigation } from "react-icons/fi";
+import { FiUpload, FiNavigation, FiArrowUp, FiArrowDown } from "react-icons/fi";
+import { useRouter } from 'next/router';
 
 interface Message {
     id: string;
@@ -36,6 +37,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
     const [isUploading, setIsUploading] = useState<boolean>(false);
     const [users, setUsers] = useState<{ [key: string]: User }>({});
     const chatContainerRef = useRef<HTMLDivElement | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         if (!groupId) return;
@@ -48,9 +50,6 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
                 ...doc.data()
             })) as Message[];
             setMessages(msgs);
-
-            // Scroll to the bottom of the chat
-            scrollToBottom();
         });
 
         return () => unsubscribe();
@@ -62,6 +61,18 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
             fetchUsers();
         }
     }, [messages]);
+
+    useEffect(() => {
+        const handleRouteChange = () => {
+            scrollToBottom();
+        };
+
+        router.events.on('routeChangeComplete', handleRouteChange);
+
+        return () => {
+            router.events.off('routeChangeComplete', handleRouteChange);
+        };
+    }, [router]);
 
     const fetchUsers = async () => {
         const newUsers: { [key: string]: User } = {};
@@ -79,6 +90,12 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
     const scrollToBottom = () => {
         if (chatContainerRef.current) {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+    };
+
+    const scrollToTop = () => {
+        if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = 0;
         }
     };
 
@@ -171,16 +188,9 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
                                                     }`}
                                                 >
                                                     <div className="space-y-1.5">
-                                                            {/* <div className="flex items-center">
-                                                                {msg.sender !== auth.currentUser?.uid && (
-                                                                    <Link href={`/users/${userIDs[msg.sender]}`}>
-                                                                        <p className="text-md font-bold">{user?.displayName || '匿名'}</p>
-                                                                    </Link>
-                                                                )}
-                                                            </div> */}
                                                             <Text>{msg.message}</Text>
                                                             {msg.fileURL && (
-                                                                <Image src={msg.fileURL} className='max-w-full md:max-w-60' />
+                                                                <Image src={msg.fileURL} className='max-w-60' />
                                                             )}
                                                     </div>
                                                 </div>
@@ -198,6 +208,10 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
                     ))
                 )}
             </VStack>
+            <div className="z-30 fixed top-20 right-0 flex flex-col md:top-3 md:right-3 space-y-3">
+                <Button icon={<FiArrowUp />} onClick={scrollToTop} />
+                <Button icon={<FiArrowDown />} onClick={scrollToBottom} />
+            </div>
             <div
                 className="w-full space-x-3 flex fixed md:static bottom-0 bg-white left-0 border-t md:border-none p-[12.5px] md:p-0"
             >
