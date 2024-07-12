@@ -1,6 +1,6 @@
 import React, { FC, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Box, Divider, Flex, IconButton, Stack, useDisclosure, Button, AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, Image } from '@chakra-ui/react';
+import { Box, Divider, Flex, IconButton, Stack, useDisclosure, Button, Image } from '@chakra-ui/react';
 import { HamburgerIcon, CloseIcon } from '@chakra-ui/icons';
 import { FiHome, FiUser, FiSettings, FiPenTool, FiUsers, FiBookmark, FiTruck, FiLogOut, FiHash, FiSearch, FiBook, FiLogIn, FiUserPlus, FiFeather, FiDroplet, FiMessageCircle } from 'react-icons/fi';
 import { IconType } from 'react-icons';
@@ -8,6 +8,7 @@ import { auth, db } from '@/firebase/firebaseConfig';
 import { signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { getDoc, doc } from 'firebase/firestore';
 import { useRouter } from 'next/router';
+import { Modal } from 'antd';
 
 interface MobileNavItemProps {
   icon: IconType;
@@ -34,9 +35,9 @@ const MobileNav: FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [userID, setUserID] = useState<string | null>(null);
-  const cancelRef = React.useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -62,13 +63,24 @@ const MobileNav: FC = () => {
   }, []);
 
   const handleLogout = async () => {
-    setIsAlertOpen(false);
-    await signOut(auth);
-    router.push('/login');
+    setLoading(true);
+    try {
+      await signOut(auth);
+      router.push('/login');
+    } catch (error) {
+      console.error('Failed to log out:', error);
+    } finally {
+      setLoading(false);
+      setIsModalOpen(false);
+    }
   };
 
   const handleLogoutClick = () => {
-    setIsAlertOpen(true);
+    setIsModalOpen(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
   };
 
   return (
@@ -114,31 +126,17 @@ const MobileNav: FC = () => {
         ) : null}
       </Box>
 
-      <AlertDialog
-        isOpen={isAlertOpen}
-        leastDestructiveRef={cancelRef}
-        onClose={() => setIsAlertOpen(false)}
-        isCentered
+      <Modal
+        title="ログアウト"
+        visible={isModalOpen}
+        onOk={handleLogout}
+        onCancel={handleCancel}
+        okText="Logout"
+        confirmLoading={loading}
+        centered
       >
-        <AlertDialogOverlay>
-          <AlertDialogContent>
-            <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              ログアウト
-            </AlertDialogHeader>
-            <AlertDialogBody>
-              ログアウトしてもよろしいですか？
-            </AlertDialogBody>
-            <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={() => setIsAlertOpen(false)}>
-                キャンセル
-              </Button>
-              <Button colorScheme="blue" onClick={handleLogout} className='ml-3'>
-                ログアウト
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
-      </AlertDialog>
+        <p>本当にログアウトしますか？</p>
+      </Modal>
     </>
   );
 };
