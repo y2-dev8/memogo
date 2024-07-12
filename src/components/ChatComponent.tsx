@@ -36,6 +36,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
     const [isSending, setIsSending] = useState<boolean>(false);
     const [isUploading, setIsUploading] = useState<boolean>(false);
     const [users, setUsers] = useState<{ [key: string]: User }>({});
+    const [isAtTop, setIsAtTop] = useState<boolean>(false);
     const chatContainerRef = useRef<HTMLDivElement | null>(null);
     const router = useRouter();
 
@@ -90,13 +91,21 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
     const scrollToBottom = () => {
         if (chatContainerRef.current) {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+            setIsAtTop(false);
         }
     };
 
     const scrollToTop = () => {
         if (chatContainerRef.current) {
             chatContainerRef.current.scrollTop = 0;
+            setIsAtTop(true);
         }
+    };
+
+    const handleScroll = () => {
+        if (!chatContainerRef.current) return;
+        const { scrollTop } = chatContainerRef.current;
+        setIsAtTop(scrollTop === 0);
     };
 
     const handleSendMessage = async () => {
@@ -120,6 +129,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
         setFile(null);
         setFileURL('');
         setIsSending(false);
+        scrollToBottom();
     };
 
     const handleBeforeUpload = async (file: File) => {
@@ -151,7 +161,12 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
 
     return (
         <div className="w-full">
-            <VStack align="stretch" className="md:mb-5 pt-[15px] pb-[65px] md:py-0 h-[80vh] overflow-y-auto scrollbar" ref={chatContainerRef}>
+            <VStack
+                align="stretch"
+                className="md:mb-5 pt-[15px] pb-[65px] md:py-0 h-[80vh] overflow-y-auto scrollbar"
+                ref={chatContainerRef}
+                onScroll={handleScroll}
+            >
                 {messages.length === 0 ? (
                     <div className="w-full h-full flex items-center justify-center">
                         <Empty description="No chat yet." />
@@ -208,13 +223,11 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
                     ))
                 )}
             </VStack>
-            <div className="z-30 fixed top-20 right-0 flex flex-col md:top-3 md:right-3 space-y-3">
-                <Button icon={<FiArrowUp />} onClick={scrollToTop} />
-                <Button icon={<FiArrowDown />} onClick={scrollToBottom} />
-            </div>
-            <div
-                className="w-full space-x-3 flex fixed md:static bottom-0 bg-white left-0 border-t md:border-none p-[12.5px] md:p-0"
-            >
+            <div className="w-full space-x-3 flex fixed md:static bottom-0 bg-white left-0 border-t md:border-none p-[12.5px] md:p-0">
+                <div className="flex">
+                    {!isAtTop && <Button icon={<FiArrowUp />} onClick={scrollToTop} />}
+                    {isAtTop && <Button icon={<FiArrowDown />} onClick={scrollToBottom} />}
+                </div>
                 <Input
                     type="text"
                     value={messageText}
