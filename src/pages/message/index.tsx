@@ -125,12 +125,36 @@ const GroupChatPage = () => {
             </Head>
             <Layout>
                 <div>
-                    <div className="w-full flex flex-col md:flex-row mt-5 md:mt-0 md:mb-10">
+                    <div className="flex flex-col lg:flex-row items-center justify-center mb-2.5">
+                        <Image src="https://opendoodles.s3-us-west-1.amazonaws.com/moshing.svg" className="h-80" />
+                        <div className="flex flex-col items-center">
+                            <p className="font-bold text-3xl">メッセージを通じて作業を効率化する</p>
+                            <p className="text-md text-gray-500 mt-5">親しみやすいUIとUXでチームの作業体験をより向上させることができます。</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-col md:flex-row mb-10">
                         <Button onClick={onCreateOpen} className="w-full" type='primary'>ルームを作成する</Button>
                         <Button onClick={onOpen} className="w-full mt-3 md:mt-0 md:ml-3" type='default'>ルームに参加する</Button>
                     </div>
-                    <div className="flex flex-col justify-center">
-                        <Image src="https://opendoodles.s3-us-west-1.amazonaws.com/clumsy.svg" className="h-80" />
+                    <div className="flex flex-col lg:flex-row items-center justify-center mb-2.5">
+                        <div className="flex flex-col items-center">
+                            <div className="w-10 h-10 bg-blue-500 rounded-full mb-1.5 flex items-center justify-center">
+                                <p className="text-md text-white font-semibold">1</p>
+                            </div>
+                            <p className="font-bold text-3xl">目に優しいUI</p>
+                            <p className="text-md text-gray-500 mt-5">蛍光色など目に悪い色を極力取り除き無駄な機能やボタンなども取り除きました。</p>
+                        </div>
+                        <Image src="https://opendoodles.s3-us-west-1.amazonaws.com/reading-side.svg" className="h-80" />
+                    </div>
+                    <div className="flex flex-col lg:flex-row items-center justify-center mb-2.5">
+                        <Image src="https://opendoodles.s3-us-west-1.amazonaws.com/unboxing.svg" className="h-80" />
+                        <div className="flex flex-col items-center">
+                            <div className="w-10 h-10 bg-blue-500 rounded-full mb-1.5 flex items-center justify-center">
+                                <p className="text-md text-white font-semibold">2</p>
+                            </div>
+                            <p className="font-bold text-3xl">グループ機能</p>
+                            <p className="text-md text-gray-500 mt-5">1分以内にグループを作成しIDのみで簡単に参加することができます。</p>
+                        </div>
                     </div>
                 </div>
             </Layout>

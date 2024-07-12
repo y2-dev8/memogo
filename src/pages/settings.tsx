@@ -13,8 +13,9 @@ import FileInput from '@/components/settings/FileInput';
 import CropModal from '@/components/settings/CropModal';
 import DeleteAccountDialog from '@/components/settings/DeleteAccountDialog';
 import { Form, Input, Button, Empty, message, Card, Row, Col, Spin, Image, Dropdown, Menu, Upload, UploadProps } from "antd";
-import { UploadOutlined, DeleteOutlined, InboxOutlined } from '@ant-design/icons';
+import { InboxOutlined } from '@ant-design/icons';
 import { FcGoogle } from "react-icons/fc"
+import { FiTrash, FiUpload } from 'react-icons/fi';
 
 const { TextArea } = Input;
 const { Dragger } = Upload;
@@ -219,10 +220,10 @@ const Settings = () => {
 
     const avatarMenu = (
         <Menu>
-            <Menu.Item key="upload" icon={<UploadOutlined />} onClick={() => avatarFileInput.current?.click()}>
+            <Menu.Item key="upload" icon={<FiUpload />} onClick={() => avatarFileInput.current?.click()}>
                 アップロード
             </Menu.Item>
-            <Menu.Item key="delete" icon={<DeleteOutlined />} onClick={deleteAvatarImage} danger>
+            <Menu.Item key="delete" icon={<FiTrash />} onClick={deleteAvatarImage} danger>
                 削除
             </Menu.Item>
         </Menu>
