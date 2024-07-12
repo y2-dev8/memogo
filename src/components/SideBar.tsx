@@ -3,9 +3,10 @@ import { auth, db } from '@/firebase/firebaseConfig';
 import { signOut, onAuthStateChanged, User } from 'firebase/auth';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Button, AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, AlertDialogContent, AlertDialogOverlay, Image } from '@chakra-ui/react';
+import { Button, Image } from '@chakra-ui/react';
 import { FiBookmark, FiDroplet, FiFeather, FiHash, FiLogIn, FiLogOut, FiMessageCircle, FiSearch, FiUser, FiUserPlus } from 'react-icons/fi';
 import { getDoc, doc } from 'firebase/firestore';
+import { Modal } from 'antd';
 
 interface MenuItemProps {
     icon: React.ReactNode;
@@ -16,9 +17,8 @@ interface MenuItemProps {
 const SideBar: React.FC = () => {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
-    const [isAlertOpen, setIsAlertOpen] = useState(false);
-    const onClose = () => setIsAlertOpen(false);
-    const cancelRef = React.useRef<HTMLButtonElement>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [userID, setUserID] = useState<string | null>('placeholder');
 
     useEffect(() => {
@@ -45,13 +45,24 @@ const SideBar: React.FC = () => {
     }, []);
 
     const handleLogout = async () => {
-        setIsAlertOpen(false);
-        await signOut(auth);
-        // router.push('/login');
+        setLoading(true);
+        try {
+            await signOut(auth);
+            // router.push('/login');
+        } catch (error) {
+            console.error('Failed to log out:', error);
+        } finally {
+            setLoading(false);
+            setIsModalOpen(false);
+        }
     };
 
     const handleLogoutClick = () => {
-        setIsAlertOpen(true);
+        setIsModalOpen(true);
+    };
+
+    const handleCancel = () => {
+        setIsModalOpen(false);
     };
 
     return (
@@ -75,33 +86,17 @@ const SideBar: React.FC = () => {
                 </div>
             </div>
 
-            <AlertDialog
-                isOpen={isAlertOpen}
-                leastDestructiveRef={cancelRef}
-                onClose={onClose}
-                isCentered
+            <Modal
+                title="ログアウト"
+                visible={isModalOpen}
+                onOk={handleLogout}
+                onCancel={handleCancel}
+                okText="Logout"
+                confirmLoading={loading}
+                centered
             >
-                <AlertDialogOverlay>
-                    <AlertDialogContent>
-                        <AlertDialogHeader fontSize="lg" fontWeight="bold">
-                            Logout
-                        </AlertDialogHeader>
-
-                        <AlertDialogBody>
-                            Are you sure you want to log out?
-                        </AlertDialogBody>
-
-                        <AlertDialogFooter>
-                            <Button ref={cancelRef} onClick={onClose}>
-                                Cancel
-                            </Button>
-                            <Button colorScheme="blue" onClick={handleLogout} ml={3}>
-                                Logout
-                            </Button>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialogOverlay>
-            </AlertDialog>
+                <p>本当にログアウトしますか？</p>
+            </Modal>
         </>
     );
 };

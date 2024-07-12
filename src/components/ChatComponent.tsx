@@ -169,7 +169,11 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
             >
                 {messages.length === 0 ? (
                     <div className="w-full h-full flex items-center justify-center">
-                        <Empty description="No chat yet." />
+                        <div className="flex flex-col justify-center text-center">
+                            <img src="https://opendoodles.s3-us-west-1.amazonaws.com/float.svg" className="h-60 opacity-50 mb-5" />
+                            <p className="text-lg opacity-50 font-semibold">楽しい会話を始めましょう</p>
+                        </div>
+                        {/* <Empty description="No chat yet." /> */}
                     </div>
                 ) : (
                     Object.keys(groupedMessages).map((dateKey) => (

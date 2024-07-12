@@ -62,8 +62,9 @@ const BookmarkedMemos = () => {
             </Head>
             <Layout>
                 {memos.length === 0 ? (
-                    <div className="w-full flex justify-center">
-                        <Empty description="No bookmarked memos found." />
+                    <div className="flex flex-col justify-center text-center">
+                        <img src="https://opendoodles.s3-us-west-1.amazonaws.com/reading.svg" className="h-60 opacity-50 mb-5" />
+                        <p className="text-lg opacity-50 font-semibold">メモをブックマークしましょう</p>
                     </div>
                 ) : (
                     <List

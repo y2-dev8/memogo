@@ -100,8 +100,9 @@ const Following = () => {
                         })}
                     </div>
                 ) : (
-                    <div className="w-full flex justify-center">
-                        <Empty description="No followed users found." />
+                    <div className="flex flex-col justify-center text-center">
+                        <img src="https://opendoodles.s3-us-west-1.amazonaws.com/selfie.svg" className="h-60 opacity-50 mb-5" />
+                        <p className="text-lg opacity-50 font-semibold">ユーザーをフォローしましょう</p>
                     </div>
                 )}
             </Layout>
