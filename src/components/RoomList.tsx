@@ -1,21 +1,20 @@
 import { useEffect, useState } from 'react';
 import { auth, db } from '@/firebase/firebaseConfig';
 import { collection, query, where, getDocs, updateDoc, addDoc, doc, arrayRemove, arrayUnion } from 'firebase/firestore';
-import { useDisclosure } from '@chakra-ui/react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
-import { Button, Modal, Input, List, message, Drawer, Typography, Space, Avatar, Tooltip, Select } from 'antd';
-import { PlusOutlined, MinusOutlined } from '@ant-design/icons';
+import { Button, Modal, Input, List, message, Drawer, Typography, Space, Avatar, Tooltip, Select, Dropdown, Menu } from 'antd';
+import { PlusOutlined, MinusOutlined, EllipsisOutlined } from '@ant-design/icons';
 import { FiChevronLeft } from "react-icons/fi";
 
 const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: string }) => {
     const [rooms, setRooms] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const { isOpen, onOpen, onClose } = useDisclosure();
-    const { isOpen: isJoinOpen, onOpen: onJoinOpen, onClose: onJoinClose } = useDisclosure();
-    const { isOpen: isCreateOpen, onOpen: onCreateOpen, onClose: onCreateClose } = useDisclosure();
-    const { isOpen: isLeaveOpen, onOpen: onLeaveOpen, onClose: onLeaveClose } = useDisclosure();
     const [isSelectOpen, setIsSelectOpen] = useState(false);
+    const [isJoinOpen, setIsJoinOpen] = useState(false);
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isLeaveOpen, setIsLeaveOpen] = useState(false);
+    const [isLeaveSelectOpen, setIsLeaveSelectOpen] = useState(false);
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [selectedRoom, setSelectedRoom] = useState<any>(null);
     const [joinGroupID, setJoinGroupID] = useState('');
@@ -60,6 +59,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
 
             if (groupIDSnapshot.empty) {
                 toast.error('グループIDが存在しません。');
+                setJoinLoading(false);
                 return;
             }
 
@@ -69,7 +69,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
             });
 
             await fetchRooms();
-            onJoinClose();
+            setIsJoinOpen(false);
             toast.success('グループの参加に成功しました!');
             router.push(`/message/${joinGroupID}`);
         } catch (error) {
@@ -111,7 +111,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
             });
 
             await fetchRooms();
-            onCreateClose();
+            setIsCreateOpen(false);
             toast.success('グループの作成に成功しました!');
             router.push(`/message/${groupID}`);
         } catch (error) {
@@ -133,7 +133,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
             });
 
             await fetchRooms();
-            onLeaveClose();
+            setIsLeaveOpen(false);
             toast.success('グループを離脱しました!');
             if (currentGroup === selectedLeaveRoomID) {
                 router.push('/');
@@ -150,18 +150,38 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
         setIsSelectOpen(true);
     };
 
+    const handleOpenLeaveSelectModal = () => {
+        setIsLeaveSelectOpen(true);
+    };
+
     const handleCloseSelectModal = () => {
         setIsSelectOpen(false);
     };
 
+    const handleCloseJoinModal = () => {
+        setIsJoinOpen(false);
+    };
+
+    const handleCloseCreateModal = () => {
+        setIsCreateOpen(false);
+    };
+
+    const handleCloseLeaveModal = () => {
+        setIsLeaveOpen(false);
+    };
+
+    const handleCloseLeaveSelectModal = () => {
+        setIsLeaveSelectOpen(false);
+    };
+
     const handleSelectCreate = () => {
         setIsSelectOpen(false);
-        onCreateOpen();
+        setIsCreateOpen(true);
     };
 
     const handleSelectJoin = () => {
         setIsSelectOpen(false);
-        onJoinOpen();
+        setIsJoinOpen(true);
     };
 
     const showDrawer = () => {
@@ -172,10 +192,34 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
         setDrawerVisible(false);
     };
 
-    const handleConfirmLeave = (room: any) => {
-        setIsSelectOpen(false);
-        onLeaveOpen();
+    const handleConfirmLeave = () => {
+        if (!selectedLeaveRoomID) {
+            toast.error('グループを選択してください。');
+            return;
+        }
+        setIsLeaveSelectOpen(false);
+        setIsLeaveOpen(true);
     };
+
+    const handleLeaveSelect = (value: string) => {
+        setSelectedLeaveRoomID(value);
+    };
+
+    const handleLeave = (room: any) => {
+        setSelectedLeaveRoomID(room.id);
+        setIsLeaveOpen(true);
+    };
+
+    const menu = (
+        <Menu>
+            <Menu.Item key="1" icon={<PlusOutlined />} onClick={handleOpenSelectModal}>
+                グループに参加する
+            </Menu.Item>
+            <Menu.Item key="2" icon={<MinusOutlined />} onClick={handleOpenLeaveSelectModal} danger>
+                グループを離脱する
+            </Menu.Item>
+        </Menu>
+    );
 
     return (
         <div>
@@ -186,8 +230,9 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                         <List.Item key={room.id || 'join'} style={{ borderBottom: 'none', paddingTop: 0, paddingBottom: "1em" }}>
                             {room.isJoinItem ? (
                                 <div className="flex flex-col items-center">
-                                    <Avatar icon={<PlusOutlined />} onClick={handleOpenSelectModal} size="large" className="cursor-pointer bg-gray-100 text-blue-500" />
-                                    <Avatar icon={<MinusOutlined />} onClick={() => setIsSelectOpen(true)} size="large" className="mt-3 cursor-pointer bg-red-100 text-red-500" />
+                                    <Dropdown overlay={menu} trigger={['click']}>
+                                        <Avatar icon={<EllipsisOutlined />} size="large" className="cursor-pointer bg-gray-50 text-blue-500" />
+                                    </Dropdown>
                                 </div>
                             ) : (
                                 <Tooltip title={room.groupName} placement="right">
@@ -219,23 +264,23 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                         renderItem={(room) => (
                             <List.Item key={room.id || 'join'} style={{ borderBottom: 'none', paddingTop: 0, paddingBottom: "1em" }}>
                                 {room.isJoinItem ? (
-                                    <div>
+                                    <div className="flex flex-col items-center">
                                         <Avatar icon={<PlusOutlined />} onClick={handleOpenSelectModal} size="large" className="cursor-pointer bg-gray-100 text-blue-500" />
                                     </div>
                                 ) : (
-                                    <Space>
+                                    <div className="flex items-center w-full">
                                         <NextLink href={`/message/${room.groupID}`}>
                                             <Avatar
                                                 src={`https://api.dicebear.com/9.x/shapes/svg?seed=${room.groupName.length}`}
                                                 className={room.groupID === currentGroup ? 'avatar-square' : 'avatar-circle'}
                                                 size="large"
                                             />
-                                            <Typography.Text className="font-bold">
+                                            <Typography.Text className="font-bold ml-2.5">
                                                 {room.groupName}
                                             </Typography.Text>
                                         </NextLink>
-                                        <Button type="link" danger onClick={() => handleConfirmLeave(room)}>離脱</Button>
-                                    </Space>
+                                        <Button type="link" danger className="ml-auto" onClick={() => handleLeave(room)}>離脱</Button>
+                                    </div>
                                 )}
                             </List.Item>
                         )}
@@ -258,7 +303,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                 title="新しいグループを作成する"
                 visible={isCreateOpen}
                 onOk={handleCreateGroup}
-                onCancel={onCreateClose}
+                onCancel={handleCloseCreateModal}
                 okText="Create"
                 okButtonProps={{ loading: createLoading }}
                 centered
@@ -279,7 +324,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                 title="新しいグループに参加する"
                 visible={isJoinOpen}
                 onOk={handleJoinGroup}
-                onCancel={onJoinClose}
+                onCancel={handleCloseJoinModal}
                 okText="Join"
                 okButtonProps={{ loading: joinLoading }}
                 centered
@@ -294,7 +339,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                 title="グループを離脱しますか？"
                 visible={isLeaveOpen}
                 onOk={handleLeaveGroup}
-                onCancel={onLeaveClose}
+                onCancel={handleCloseLeaveModal}
                 okText="Leave"
                 okButtonProps={{ loading: leaveLoading, danger: true }}
                 centered
@@ -303,16 +348,16 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
             </Modal>
             <Modal
                 title="離脱するグループを選択"
-                visible={isSelectOpen}
+                visible={isLeaveSelectOpen}
                 onOk={handleConfirmLeave}
-                onCancel={handleCloseSelectModal}
+                onCancel={handleCloseLeaveSelectModal}
                 okText="Select"
                 centered
             >
                 <Select
                     placeholder="グループを選択"
                     style={{ width: '100%' }}
-                    onChange={(value) => setSelectedLeaveRoomID(value)}
+                    onChange={handleLeaveSelect}
                 >
                     {rooms.map((room) => (
                         <Select.Option key={room.id} value={room.id}>
