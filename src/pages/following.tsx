@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { auth, db } from '@/firebase/firebaseConfig';
+import { db } from '@/firebase/firebaseConfig';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import Link from 'next/link';
-import { onAuthStateChanged } from 'firebase/auth';
 import { Spin, message, Divider, Empty } from 'antd';
 import Head from 'next/head';
 import Layout from '@/components/Layout';
 import useAuthRedirect from '@/hooks/useAuthRedirect';
+import useAuthState from '@/hooks/useAuthState';
 import { Avatar, Flex } from "@chakra-ui/react";
 
 interface User {
@@ -19,9 +19,9 @@ interface User {
 
 const Following = () => {
     useAuthRedirect();
+    const { user, loading, error } = useAuthState();
     const [following, setFollowing] = useState<User[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const currentUser = auth.currentUser;
+    const [loadingFollowing, setLoadingFollowing] = useState<boolean>(true);
 
     const fetchFollowing = async (userId: string) => {
         try {
@@ -55,25 +55,23 @@ const Following = () => {
             console.error('Error fetching following users:', error);
             message.error('フォローしているユーザーの取得中にエラーが発生しました。');
         } finally {
-            setLoading(false);
+            setLoadingFollowing(false);
         }
     };
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                setLoading(true);
-                fetchFollowing(user.uid);
-            } else {
-                setLoading(false);
-            }
-        });
+        if (user) {
+            setLoadingFollowing(true);
+            fetchFollowing(user.uid);
+        }
+    }, [user]);
 
-        return () => unsubscribe();
-    }, []);
-
-    if (loading) {
+    if (loading || loadingFollowing) {
         return <div className="w-full min-h-screen flex justify-center items-center"><Spin size="large" /></div>;
+    }
+
+    if (error) {
+        return <div className="w-full min-h-screen flex justify-center items-center">{error}</div>;
     }
 
     return (

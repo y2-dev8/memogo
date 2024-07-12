@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { auth, db } from '@/firebase/firebaseConfig';
+import { db } from '@/firebase/firebaseConfig';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
 import Head from 'next/head';
 import { Typography, Spin, List, Card, Empty } from 'antd';
 import useAuthRedirect from '@/hooks/useAuthRedirect';
+import useAuthState from '@/hooks/useAuthState';
 
 const { Title, Text } = Typography;
 
@@ -18,8 +18,9 @@ interface Memo {
 
 const BookmarkedMemos = () => {
     useAuthRedirect();
+    const { user, loading, error } = useAuthState();
     const [memos, setMemos] = useState<Memo[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loadingMemos, setLoadingMemos] = useState(true);
 
     const fetchBookmarkedMemos = async (userId: string) => {
         const q = query(collection(db, 'bookmarks'), where('userId', '==', userId));
@@ -38,23 +39,21 @@ const BookmarkedMemos = () => {
         }
 
         setMemos(bookmarkedMemos);
-        setLoading(false);
+        setLoadingMemos(false);
     };
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                setLoading(true);
-                fetchBookmarkedMemos(user.uid);
-            } else {
-                setLoading(false);
-            }
-        });
+        if (user) {
+            setLoadingMemos(true);
+            fetchBookmarkedMemos(user.uid);
+        }
+    }, [user]);
 
-        return () => unsubscribe();
-    }, []);
+    if (loading || loadingMemos) return <div className="w-full min-h-screen flex justify-center items-center"><Spin size="large" /></div>;
 
-    if (loading) return <div className="w-full min-h-screen flex justify-center items-center"><Spin size="large" /></div>;
+    if (error) {
+        return <div className="w-full min-h-screen flex justify-center items-center">{error}</div>;
+    }
 
     return (
         <div className="container mx-auto my-10">

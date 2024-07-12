@@ -3,9 +3,9 @@ import { auth, db, storage } from '@/firebase/firebaseConfig';
 import { collection, addDoc, query, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Text, VStack, HStack, Avatar } from '@chakra-ui/react';
-import NextLink from 'next/link';
+import Link from 'next/link';
 import { format } from 'date-fns';
-import { Empty, Input, Button, Upload, message } from "antd";
+import { Empty, Input, Button, Upload, message, Image, Divider } from "antd";
 import { FiUpload, FiNavigation } from "react-icons/fi";
 
 interface Message {
@@ -141,42 +141,55 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
                     </div>
                 ) : (
                     Object.keys(groupedMessages).map((dateKey) => (
-                        <div key={dateKey}>
-                            <div className="text-center my-2.5 text-gray-500">
-                                {format(new Date(dateKey), 'MMMM dd')}
+                        <div key={dateKey} className="space-y-[12.5px]">
+                            <div className="flex justify-center">
+                                <Divider>
+                                    <Text className="bg-blue-50 text-xs text-blue-500 px-1.5 rounded-full">
+                                        {format(new Date(dateKey), 'MMMM dd')}
+                                    </Text>
+                                </Divider>
                             </div>
                             {groupedMessages[dateKey].map((msg, index) => {
                                 const user = users[msg.sender];
                                 return (
-                                    <div key={msg.id} className="mb-3">
-                                        <div
-                                            className={`w-fit p-3 rounded-md ${
-                                                msg.sender === auth.currentUser?.uid ? 'ml-auto bg-blue-100' : 'bg-gray-50'
-                                            }`}
-                                        >
-                                            <HStack align="start" spacing="3">
-                                                <NextLink href={`/users/${userIDs[msg.sender]}`} passHref>
+                                    <div key={msg.id}>
+                                        <div className="flex">
+                                            {msg.sender !== auth.currentUser?.uid && (
+                                                <Link href={`/users/${userIDs[msg.sender]}`}>
                                                     <Avatar
                                                         src={user?.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${user?.displayName.length}`} 
                                                         name={user?.displayName}
-                                                        size="md"
+                                                        size="sm"
+                                                        className="mr-1.5"
                                                     />
-                                                </NextLink>
-                                                <div>
-                                                    <div className="flex items-center">
-                                                        <NextLink href={`/users/${userIDs[msg.sender]}`} passHref>
-                                                            <p className="text-md font-bold">{user?.displayName || '匿名'}</p>
-                                                        </NextLink>
-                                                        <Text className="ml-2.5 opacity-50 text-xs">
-                                                            {format(new Date(msg.timestamp.toDate()), 'HH:mm')}
-                                                        </Text>
+                                                </Link>
+                                            )}
+                                            <div className={msg.sender === auth.currentUser?.uid ? 'ml-auto' : ''}>
+                                                <div
+                                                    className={`w-fit p-3 rounded-md ${
+                                                        msg.sender === auth.currentUser?.uid ? 'bg-blue-100' : 'bg-gray-50'
+                                                    }`}
+                                                >
+                                                    <div className="space-y-1.5">
+                                                            {/* <div className="flex items-center">
+                                                                {msg.sender !== auth.currentUser?.uid && (
+                                                                    <Link href={`/users/${userIDs[msg.sender]}`}>
+                                                                        <p className="text-md font-bold">{user?.displayName || '匿名'}</p>
+                                                                    </Link>
+                                                                )}
+                                                            </div> */}
+                                                            <Text>{msg.message}</Text>
+                                                            {msg.fileURL && (
+                                                                <Image src={msg.fileURL} className='max-w-full md:max-w-60' />
+                                                            )}
                                                     </div>
-                                                    <Text>{msg.message}</Text>
-                                                    {msg.fileURL && (
-                                                        <img src={msg.fileURL} alt="attachment" className='my-[5px] max-w-full md:max-w-60 rounded-md' />
-                                                    )}
                                                 </div>
-                                            </HStack>
+                                                <div className="flex">
+                                                    <Text className={`mt-0.5 text-xs opacity-50 ${msg.sender === auth.currentUser?.uid && 'ml-auto'}`}>
+                                                        {format(new Date(msg.timestamp.toDate()), 'HH:mm')}
+                                                    </Text>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 );
@@ -201,14 +214,14 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
                         </Button>
                     </Upload>
                     <Button onClick={handleSendMessage} type="primary" loading={isSending}>
-                        送信する
+                        送信
                     </Button>
                 </div>
                 <div className='flex md:hidden space-x-3'>
+                    <Button icon={<FiNavigation />} onClick={handleSendMessage} type="primary" loading={isSending} />
                     <Upload beforeUpload={handleBeforeUpload} showUploadList={false}>
                         <Button icon={<FiUpload />} type="dashed" loading={isUploading} />
                     </Upload>
-                    <Button icon={<FiNavigation />} onClick={handleSendMessage} type="primary" loading={isSending} />
                 </div>
             </div>
         </div>

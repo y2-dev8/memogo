@@ -100,5 +100,5 @@
   }
 
   .scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(135, 135, 135, .75);
+    background-color: rgba(135, 135, 135, .65);
   }
