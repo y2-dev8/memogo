@@ -43,7 +43,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
     useEffect(() => {
         if (!groupId) return;
 
-        const messagesRef = collection(db, 'CollaborationHub', groupId, 'messages');
+        const messagesRef = collection(db, 'ChatterHub', groupId, 'messages');
         const q = query(messagesRef, orderBy('timestamp', 'asc'));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const msgs = snapshot.docs.map(doc => ({
@@ -115,7 +115,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
 
         setIsSending(true);
 
-        const messagesRef = collection(db, 'CollaborationHub', groupId, 'messages');
+        const messagesRef = collection(db, 'ChatterHub', groupId, 'messages');
         const newMessage = {
             message: messageText,
             fileURL,
@@ -138,7 +138,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
 
     const handleBeforeUpload = async (file: File) => {
         setIsUploading(true);
-        const storageRef = ref(storage, `CollaborationHub/${groupId}/${file.name}`);
+        const storageRef = ref(storage, `ChatterHub/${groupId}/${file.name}`);
         await uploadBytes(storageRef, file);
         const fileURL = await getDownloadURL(storageRef);
         setFile(file);

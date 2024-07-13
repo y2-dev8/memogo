@@ -32,7 +32,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
 
     useEffect(() => {
         const fetchRooms = async () => {
-            const roomsRef = collection(db, 'groupsInfo');
+            const roomsRef = collection(db, 'InfoNest');
             const q = query(roomsRef, where('participants', 'array-contains', userId));
             const querySnapshot = await getDocs(q);
             const roomList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -45,7 +45,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
     }, [userId]);
 
     const fetchRooms = async () => {
-        const roomsRef = collection(db, 'groupsInfo');
+        const roomsRef = collection(db, 'InfoNest');
         const q = query(roomsRef, where('participants', 'array-contains', userId));
         const querySnapshot = await getDocs(q);
         const roomList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -55,7 +55,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
     const handleJoinGroup = async () => {
         setJoinLoading(true);
         try {
-            const groupIDQuery = query(collection(db, 'groupsInfo'), where('groupID', '==', joinGroupID));
+            const groupIDQuery = query(collection(db, 'InfoNest'), where('groupID', '==', joinGroupID));
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (groupIDSnapshot.empty) {
@@ -105,7 +105,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
         }
 
         try {
-            const groupIDQuery = query(collection(db, 'groupsInfo'), where('groupID', '==', groupID));
+            const groupIDQuery = query(collection(db, 'InfoNest'), where('groupID', '==', groupID));
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (!groupIDSnapshot.empty) {
@@ -114,7 +114,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                 return;
             }
 
-            await addDoc(collection(db, 'groupsInfo'), {
+            await addDoc(collection(db, 'InfoNest'), {
                 groupName,
                 groupID,
                 password: isPasswordProtected ? groupPassword : '',
@@ -138,7 +138,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
         if (!selectedLeaveRoomID) return;
 
         try {
-            const groupDoc = doc(db, 'groupsInfo', selectedLeaveRoomID);
+            const groupDoc = doc(db, 'InfoNest', selectedLeaveRoomID);
             await updateDoc(groupDoc, {
                 participants: arrayRemove(auth.currentUser?.uid)
             });

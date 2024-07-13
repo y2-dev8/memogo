@@ -38,7 +38,7 @@ const GroupChatPage = () => {
         }
 
         try {
-            const groupIDQuery = query(collection(db, 'groupsInfo'), where('groupID', '==', joinGroupID));
+            const groupIDQuery = query(collection(db, 'InfoNest'), where('groupID', '==', joinGroupID));
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (groupIDSnapshot.empty) {
@@ -80,7 +80,7 @@ const GroupChatPage = () => {
         }
 
         try {
-            const groupIDQuery = query(collection(db, 'groupsInfo'), where('groupID', '==', groupID));
+            const groupIDQuery = query(collection(db, 'InfoNest'), where('groupID', '==', groupID));
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (!groupIDSnapshot.empty) {
@@ -88,7 +88,7 @@ const GroupChatPage = () => {
                 return;
             }
 
-            await addDoc(collection(db, 'groupsInfo'), {
+            await addDoc(collection(db, 'InfoNest'), {
                 groupName,
                 groupID,
                 password: isPasswordProtected ? groupPassword : '',
@@ -111,7 +111,7 @@ const GroupChatPage = () => {
                 return;
             }
 
-            const groupsQuery = query(collection(db, 'groupsInfo'), where('participants', 'array-contains', auth.currentUser.uid));
+            const groupsQuery = query(collection(db, 'InfoNest'), where('participants', 'array-contains', auth.currentUser.uid));
             const groupsSnapshot = await getDocs(groupsQuery);
 
             if (!groupsSnapshot.empty) {
