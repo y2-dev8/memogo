@@ -3,7 +3,7 @@ import { auth, db } from '@/firebase/firebaseConfig';
 import { collection, query, where, getDocs, updateDoc, addDoc, doc, arrayRemove, arrayUnion } from 'firebase/firestore';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
-import { Button, Modal, Input, List, message, Drawer, Typography, Space, Avatar, Tooltip, Select, Dropdown, Menu } from 'antd';
+import { Button, Modal, Input, List, message, Drawer, Typography, Space, Avatar, Tooltip, Select, Dropdown, Menu, Switch } from 'antd';
 import { PlusOutlined, MinusOutlined, EllipsisOutlined } from '@ant-design/icons';
 import { FiChevronLeft } from "react-icons/fi";
 
@@ -18,11 +18,15 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [selectedRoom, setSelectedRoom] = useState<any>(null);
     const [joinGroupID, setJoinGroupID] = useState('');
+    const [joinGroupPassword, setJoinGroupPassword] = useState('');
+    const [isJoinPasswordRequired, setIsJoinPasswordRequired] = useState(false);
     const [joinLoading, setJoinLoading] = useState(false);
     const [createLoading, setCreateLoading] = useState(false);
     const [leaveLoading, setLeaveLoading] = useState(false);
     const [groupName, setGroupName] = useState('');
     const [groupID, setGroupID] = useState('');
+    const [groupPassword, setGroupPassword] = useState('');
+    const [isPasswordProtected, setIsPasswordProtected] = useState(false);
     const [selectedLeaveRoomID, setSelectedLeaveRoomID] = useState('');
     const toast = message;
     const router = useRouter();
@@ -30,7 +34,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
     useEffect(() => {
         const fetchRooms = async () => {
             setLoading(true);
-            const roomsRef = collection(db, 'groups');
+            const roomsRef = collection(db, 'groupsInfo');
             const q = query(roomsRef, where('participants', 'array-contains', userId));
             const querySnapshot = await getDocs(q);
             const roomList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -44,7 +48,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
     }, [userId]);
 
     const fetchRooms = async () => {
-        const roomsRef = collection(db, 'groups');
+        const roomsRef = collection(db, 'groupsInfo');
         const q = query(roomsRef, where('participants', 'array-contains', userId));
         const querySnapshot = await getDocs(q);
         const roomList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -54,7 +58,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
     const handleJoinGroup = async () => {
         setJoinLoading(true);
         try {
-            const groupIDQuery = query(collection(db, 'groups'), where('groupID', '==', joinGroupID));
+            const groupIDQuery = query(collection(db, 'groupsInfo'), where('groupID', '==', joinGroupID));
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (groupIDSnapshot.empty) {
@@ -63,14 +67,23 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                 return;
             }
 
-            const groupDoc = groupIDSnapshot.docs[0].ref;
-            await updateDoc(groupDoc, {
+            const groupDoc = groupIDSnapshot.docs[0];
+            const groupData = groupDoc.data();
+
+            // パスワードの確認
+            if (groupData.password && groupData.password !== joinGroupPassword) {
+                toast.error('パスワードが間違っています。');
+                setJoinLoading(false);
+                return;
+            }
+
+            await updateDoc(groupDoc.ref, {
                 participants: arrayUnion(auth.currentUser?.uid)
             });
 
             await fetchRooms();
             setIsJoinOpen(false);
-            toast.success('グループの参加に成功しました!');
+            toast.success('グループの参加に成功しました。');
             router.push(`/message/${joinGroupID}`);
         } catch (error) {
             toast.error('グループの参加に失敗しました。');
@@ -83,7 +96,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
     const handleCreateGroup = async () => {
         setCreateLoading(true);
         if (!groupName || !groupID) {
-            toast.error('グループの名前とIDは必須です。');
+            toast.error('グループの名前、IDは必須です。');
             setCreateLoading(false);
             return;
         }
@@ -95,7 +108,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
         }
 
         try {
-            const groupIDQuery = query(collection(db, 'groups'), where('groupID', '==', groupID));
+            const groupIDQuery = query(collection(db, 'groupsInfo'), where('groupID', '==', groupID));
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (!groupIDSnapshot.empty) {
@@ -104,15 +117,16 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                 return;
             }
 
-            await addDoc(collection(db, 'groups'), {
+            await addDoc(collection(db, 'groupsInfo'), {
                 groupName,
                 groupID,
+                password: isPasswordProtected ? groupPassword : '',
                 participants: [auth.currentUser?.uid]
             });
 
             await fetchRooms();
             setIsCreateOpen(false);
-            toast.success('グループの作成に成功しました!');
+            toast.success('グループを作成しました。');
             router.push(`/message/${groupID}`);
         } catch (error) {
             toast.error('グループの作成に失敗しました。');
@@ -127,14 +141,14 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
         if (!selectedLeaveRoomID) return;
 
         try {
-            const groupDoc = doc(db, 'groups', selectedLeaveRoomID);
+            const groupDoc = doc(db, 'groupsInfo', selectedLeaveRoomID);
             await updateDoc(groupDoc, {
                 participants: arrayRemove(auth.currentUser?.uid)
             });
 
             await fetchRooms();
             setIsLeaveOpen(false);
-            toast.success('グループを離脱しました!');
+            toast.success('グループを離脱しました。');
             if (currentGroup === selectedLeaveRoomID) {
                 router.push('/');
             }
@@ -318,7 +332,21 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                     placeholder="グループID"
                     value={groupID}
                     onChange={(e) => setGroupID(e.target.value)}
+                    className="mb-2.5"
                 />
+                <div className="flex items-center mt-[10px]">
+                    <span className="mr-[10px]">パスワードを設定する</span>
+                    <Switch checked={isPasswordProtected} onChange={setIsPasswordProtected} />
+                </div>
+                {isPasswordProtected && (
+                    <Input
+                        placeholder="パスワード"
+                        type="password"
+                        value={groupPassword}
+                        onChange={(e) => setGroupPassword(e.target.value)}
+                        className="mt-[10px]"
+                    />
+                )}
             </Modal>
             <Modal
                 title="新しいグループに参加する"
@@ -333,7 +361,21 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                     placeholder="グループID"
                     value={joinGroupID}
                     onChange={(e) => setJoinGroupID(e.target.value)}
+                    className="mb-2.5"
                 />
+                <div className="flex items-center">
+                    <span className="mr-[10px]">パスワードが必要</span>
+                    <Switch checked={isJoinPasswordRequired} onChange={setIsJoinPasswordRequired} />
+                </div>
+                {isJoinPasswordRequired && (
+                    <Input
+                        placeholder="パスワード"
+                        type="password"
+                        value={joinGroupPassword}
+                        onChange={(e) => setJoinGroupPassword(e.target.value)}
+                        className="mt-[10px]"
+                    />
+                )}
             </Modal>
             <Modal
                 title="グループを離脱しますか？"

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { auth, db, storage } from '@/firebase/firebaseConfig';
 import { collection, addDoc, query, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { Text, VStack, HStack, Avatar } from '@chakra-ui/react';
+import { Text, VStack, Avatar } from '@chakra-ui/react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { Empty, Input, Button, Upload, message, Image, Divider } from "antd";
@@ -43,7 +43,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
     useEffect(() => {
         if (!groupId) return;
 
-        const messagesRef = collection(db, 'groups', groupId, 'messages');
+        const messagesRef = collection(db, 'groupsChat', groupId, 'messages');
         const q = query(messagesRef, orderBy('timestamp', 'asc'));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const msgs = snapshot.docs.map(doc => ({
@@ -115,14 +115,19 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
 
         setIsSending(true);
 
-        const messagesRef = collection(db, 'groups', groupId, 'messages');
-
-        await addDoc(messagesRef, {
+        const messagesRef = collection(db, 'groupsChat', groupId, 'messages');
+        const newMessage = {
             message: messageText,
             fileURL,
             sender: auth.currentUser?.uid,
             timestamp: new Date()
-        });
+        };
+
+        try {
+            await addDoc(messagesRef, newMessage);
+        } catch (error) {
+            console.error("Error sending message: ", error);
+        }
 
         setMessageText('');
         setFile(null);
@@ -227,36 +232,36 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
                     </>
                 )}
             </VStack>
-                <div className="w-full space-x-2.5 flex fixed md:static bottom-0 bg-white left-0 border-t md:border-none p-[12.5px] md:p-0">
-                    {messages.length > 0 && (
-                        <div className="flex">
-                            {!isAtTop && <Button icon={<FiArrowUp />} onClick={scrollToTop} />}
-                            {isAtTop && <Button icon={<FiArrowDown />} onClick={scrollToBottom} />}
-                        </div>
-                    )}
-                    <Input
-                        type="text"
-                        value={messageText}
-                        onChange={(e) => setMessageText(e.target.value)}
-                        placeholder="メッセージを入力"
-                    />
-                    <div className="hidden md:flex space-x-3">
-                        <Upload beforeUpload={handleBeforeUpload} showUploadList={false}>
-                            <Button icon={<FiUpload />} type="dashed" loading={isUploading}>
-                                {file ? 'アップロード済み' : 'アップロード'}
-                            </Button>
-                        </Upload>
-                        <Button onClick={handleSendMessage} type="primary" loading={isSending}>
-                            送信
+            <div className="w-full space-x-2.5 flex fixed md:static bottom-0 bg-white left-0 border-t md:border-none p-[12.5px] md:p-0">
+                {messages.length > 0 && (
+                    <div className="flex">
+                        {!isAtTop && <Button icon={<FiArrowUp />} onClick={scrollToTop} />}
+                        {isAtTop && <Button icon={<FiArrowDown />} onClick={scrollToBottom} />}
+                    </div>
+                )}
+                <Input
+                    type="text"
+                    value={messageText}
+                    onChange={(e) => setMessageText(e.target.value)}
+                    placeholder="メッセージを入力"
+                />
+                <div className="hidden md:flex space-x-2.5">
+                    <Upload beforeUpload={handleBeforeUpload} showUploadList={false}>
+                        <Button icon={<FiUpload />} type="dashed" loading={isUploading}>
+                            {file ? 'アップロード済み' : 'アップロード'}
                         </Button>
-                    </div>
-                    <div className='flex md:hidden space-x-3'>
-                        <Button icon={<FiNavigation />} onClick={handleSendMessage} type="primary" loading={isSending} />
-                        <Upload beforeUpload={handleBeforeUpload} showUploadList={false}>
-                            <Button icon={<FiUpload />} type="dashed" loading={isUploading} />
-                        </Upload>
-                    </div>
+                    </Upload>
+                    <Button onClick={handleSendMessage} type="primary" loading={isSending}>
+                        送信
+                    </Button>
                 </div>
+                <div className='flex md:hidden space-x-3'>
+                    <Button icon={<FiNavigation />} onClick={handleSendMessage} type="primary" loading={isSending} />
+                    <Upload beforeUpload={handleBeforeUpload} showUploadList={false}>
+                        <Button icon={<FiUpload />} type="dashed" loading={isUploading} />
+                    </Upload>
+                </div>
+            </div>
         </div>
     );
 };

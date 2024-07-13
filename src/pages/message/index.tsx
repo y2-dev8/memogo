@@ -4,15 +4,17 @@ import { auth, db } from '@/firebase/firebaseConfig';
 import { collection, addDoc, getDocs, query, where, updateDoc, doc, arrayUnion } from 'firebase/firestore';
 import { useDisclosure, Image } from '@chakra-ui/react';
 import Layout from '@/components/Layout';
-import RoomList from '@/components/RoomList';
-import { FaPlus } from "react-icons/fa";
 import Head from 'next/head';
-import { Button, Modal, Input, message, Spin } from "antd";
+import { Button, Modal, Input, message, Spin, Switch } from "antd";
 
 const GroupChatPage = () => {
     const [groupName, setGroupName] = useState('');
     const [groupID, setGroupID] = useState('');
+    const [groupPassword, setGroupPassword] = useState('');
     const [joinGroupID, setJoinGroupID] = useState('');
+    const [joinGroupPassword, setJoinGroupPassword] = useState('');
+    const [isPasswordProtected, setIsPasswordProtected] = useState(false);
+    const [isJoinPasswordRequired, setIsJoinPasswordRequired] = useState(false);
     const { isOpen, onOpen, onClose } = useDisclosure();
     const { isOpen: isCreateOpen, onOpen: onCreateOpen, onClose: onCreateClose } = useDisclosure();
     const [loading, setLoading] = useState<boolean>(true);
@@ -36,7 +38,7 @@ const GroupChatPage = () => {
         }
 
         try {
-            const groupIDQuery = query(collection(db, 'groups'), where('groupID', '==', joinGroupID));
+            const groupIDQuery = query(collection(db, 'groupsInfo'), where('groupID', '==', joinGroupID));
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (groupIDSnapshot.empty) {
@@ -44,8 +46,16 @@ const GroupChatPage = () => {
                 return;
             }
 
-            const groupDoc = groupIDSnapshot.docs[0].ref;
-            await updateDoc(groupDoc, {
+            const groupDoc = groupIDSnapshot.docs[0];
+            const groupData = groupDoc.data();
+
+            // パスワードの確認
+            if (groupData.password && groupData.password !== joinGroupPassword) {
+                showMessage('パスワードが間違っています。', 'error');
+                return;
+            }
+
+            await updateDoc(groupDoc.ref, {
                 participants: arrayUnion(auth.currentUser?.uid)
             });
 
@@ -70,7 +80,7 @@ const GroupChatPage = () => {
         }
 
         try {
-            const groupIDQuery = query(collection(db, 'groups'), where('groupID', '==', groupID));
+            const groupIDQuery = query(collection(db, 'groupsInfo'), where('groupID', '==', groupID));
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (!groupIDSnapshot.empty) {
@@ -78,9 +88,10 @@ const GroupChatPage = () => {
                 return;
             }
 
-            await addDoc(collection(db, 'groups'), {
+            await addDoc(collection(db, 'groupsInfo'), {
                 groupName,
                 groupID,
+                password: isPasswordProtected ? groupPassword : '',
                 participants: [auth.currentUser?.uid]
             });
 
@@ -100,7 +111,7 @@ const GroupChatPage = () => {
                 return;
             }
 
-            const groupsQuery = query(collection(db, 'groups'), where('participants', 'array-contains', auth.currentUser.uid));
+            const groupsQuery = query(collection(db, 'groupsInfo'), where('participants', 'array-contains', auth.currentUser.uid));
             const groupsSnapshot = await getDocs(groupsQuery);
 
             if (!groupsSnapshot.empty) {
@@ -184,6 +195,19 @@ const GroupChatPage = () => {
                     value={groupID}
                     onChange={(e) => setGroupID(e.target.value)}
                 />
+                <div className="flex items-center mt-[10px]">
+                    <span className="mr-[10px]">パスワードを設定する</span>
+                    <Switch checked={isPasswordProtected} onChange={setIsPasswordProtected} />
+                </div>
+                {isPasswordProtected && (
+                    <Input
+                        placeholder="パスワード"
+                        type="password"
+                        value={groupPassword}
+                        onChange={(e) => setGroupPassword(e.target.value)}
+                        className="mt-[10px]"
+                    />
+                )}
             </Modal>
             <Modal
                 title="新しいグループに参加する"
@@ -197,7 +221,21 @@ const GroupChatPage = () => {
                     placeholder="グループID"
                     value={joinGroupID}
                     onChange={(e) => setJoinGroupID(e.target.value)}
+                    className="mb-[10px]"
                 />
+                <div className="flex items-center">
+                    <span className="mr-[10px]">パスワードが必要</span>
+                    <Switch checked={isJoinPasswordRequired} onChange={setIsJoinPasswordRequired} />
+                </div>
+                {isJoinPasswordRequired && (
+                    <Input
+                        placeholder="パスワード"
+                        type="password"
+                        value={joinGroupPassword}
+                        onChange={(e) => setJoinGroupPassword(e.target.value)}
+                        className="mt-[10px]"
+                    />
+                )}
             </Modal>
         </div>
     );
