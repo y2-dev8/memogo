@@ -206,7 +206,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
                                                 )}
                                                 <div className={msg.sender === auth.currentUser?.uid ? 'ml-auto' : ''}>
                                                     <div
-                                                        className={`w-fit p-3 rounded-md ${
+                                                        className={`w-fit px-[12.5px] py-2.5 rounded-md ${
                                                             msg.sender === auth.currentUser?.uid ? 'bg-blue-100' : 'bg-gray-50'
                                                         }`}
                                                     >
