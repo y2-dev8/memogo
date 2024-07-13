@@ -133,7 +133,7 @@ const GroupChatPage = () => {
                         </div>
                     </div>
                     <div className="flex flex-col md:flex-row mb-10">
-                        <Button onClick={onOpen} className="w-full mt-3 md:mt-0 md:ml-3" type='dashed'>ルームに参加する</Button>
+                        <Button onClick={onOpen} className="w-full mt-3 md:mt-0 md:mr-3" type='dashed'>ルームに参加する</Button>
                         <Button onClick={onCreateOpen} className="w-full" type='primary'>ルームを作成する</Button>
                     </div>
                     <div className="flex flex-col lg:flex-row items-center justify-center mb-2.5">
