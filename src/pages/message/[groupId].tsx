@@ -9,7 +9,7 @@ import Head from 'next/head';
 
 const GroupChat = () => {
     const router = useRouter();
-    const { groupId } = router.query;
+    const { groupId, invite } = router.query;
     const [currentUser, setCurrentUser] = useState<any>(null);
     const [userIDs, setUserIDs] = useState<{ [key: string]: string }>({});
     const [joinGroupID, setJoinGroupID] = useState<string>('');
@@ -30,6 +30,11 @@ const GroupChat = () => {
                     userIDMap[doc.id] = data.userID;
                 });
                 setUserIDs(userIDMap);
+
+                if (invite === 'invite') {
+                    setJoinGroupID(groupId as string);
+                    setIsModalOpen(true);
+                }
             } else {
                 setCurrentUser(null);
             }
@@ -37,12 +42,12 @@ const GroupChat = () => {
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [invite, groupId]);
 
     const handleJoinGroup = async () => {
         setConfirmLoading(true);
         try {
-            const groupIDQuery = query(collection(db, 'groupChat'), where('groupID', '==', joinGroupID));
+            const groupIDQuery = query(collection(db, 'groups'), where('groupID', '==', joinGroupID));
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (groupIDSnapshot.empty) {
@@ -86,7 +91,7 @@ const GroupChat = () => {
                 </div>
             </div>
             <Modal
-                title="新しいグループに参加する"
+                title="グループに参加する"
                 visible={isModalOpen}
                 onOk={handleJoinGroup}
                 confirmLoading={confirmLoading}
@@ -94,11 +99,7 @@ const GroupChat = () => {
                 okText="Join"
                 centered
             >
-                <Input
-                    placeholder="グループID"
-                    value={joinGroupID}
-                    onChange={(e) => setJoinGroupID(e.target.value)}
-                />
+                <p>このグループに参加しますか？</p>
             </Modal>
         </div>
     );

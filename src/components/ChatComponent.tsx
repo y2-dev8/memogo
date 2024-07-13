@@ -110,7 +110,6 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
 
     const handleSendMessage = async () => {
         if (!messageText && !fileURL) {
-            message.error('メッセージもしくはファイルが必要です。');
             return;
         }
 
@@ -173,88 +172,91 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
                             <img src="https://opendoodles.s3-us-west-1.amazonaws.com/float.svg" className="h-60 opacity-50 mb-5" />
                             <p className="text-lg opacity-50 font-semibold">楽しい会話を始めましょう</p>
                         </div>
-                        {/* <Empty description="No chat yet." /> */}
                     </div>
                 ) : (
-                    Object.keys(groupedMessages).map((dateKey) => (
-                        <div key={dateKey} className="space-y-[12.5px]">
-                            <div className="flex justify-center">
-                                <Divider>
-                                    <Text className="bg-blue-50 text-xs text-blue-500 px-1.5 rounded-full">
-                                        {format(new Date(dateKey), 'MMMM dd')}
-                                    </Text>
-                                </Divider>
-                            </div>
-                            {groupedMessages[dateKey].map((msg, index) => {
-                                const user = users[msg.sender];
-                                return (
-                                    <div key={msg.id}>
-                                        <div className="flex">
-                                            {msg.sender !== auth.currentUser?.uid && (
-                                                <Link href={`/users/${userIDs[msg.sender]}`}>
-                                                    <Avatar
-                                                        src={user?.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${user?.displayName.length}`} 
-                                                        name={user?.displayName}
-                                                        size="sm"
-                                                        className="mr-1.5"
-                                                    />
-                                                </Link>
-                                            )}
-                                            <div className={msg.sender === auth.currentUser?.uid ? 'ml-auto' : ''}>
-                                                <div
-                                                    className={`w-fit p-3 rounded-md ${
-                                                        msg.sender === auth.currentUser?.uid ? 'bg-blue-100' : 'bg-gray-50'
-                                                    }`}
-                                                >
-                                                    <div className="space-y-1.5">
+                    <>
+                        {Object.keys(groupedMessages).map((dateKey) => (
+                            <div key={dateKey} className="space-y-[12.5px]">
+                                <div className="flex justify-center">
+                                    <Divider>
+                                        <Text className="bg-blue-50 text-xs text-blue-500 px-1.5 rounded-full">
+                                            {format(new Date(dateKey), 'MMMM dd')}
+                                        </Text>
+                                    </Divider>
+                                </div>
+                                {groupedMessages[dateKey].map((msg, index) => {
+                                    const user = users[msg.sender];
+                                    return (
+                                        <div key={msg.id}>
+                                            <div className="flex">
+                                                {msg.sender !== auth.currentUser?.uid && (
+                                                    <Link href={`/users/${userIDs[msg.sender]}`}>
+                                                        <Avatar
+                                                            src={user?.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${user?.displayName.length}`} 
+                                                            name={user?.displayName}
+                                                            size="sm"
+                                                            className="mr-1.5"
+                                                        />
+                                                    </Link>
+                                                )}
+                                                <div className={msg.sender === auth.currentUser?.uid ? 'ml-auto' : ''}>
+                                                    <div
+                                                        className={`w-fit p-3 rounded-md ${
+                                                            msg.sender === auth.currentUser?.uid ? 'bg-blue-100' : 'bg-gray-50'
+                                                        }`}
+                                                    >
+                                                        <div className="space-y-1.5">
                                                             <Text>{msg.message}</Text>
                                                             {msg.fileURL && (
                                                                 <Image src={msg.fileURL} className='max-w-60' />
                                                             )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div className="flex">
-                                                    <Text className={`mt-0.5 text-xs opacity-50 ${msg.sender === auth.currentUser?.uid && 'ml-auto'}`}>
-                                                        {format(new Date(msg.timestamp.toDate()), 'HH:mm')}
-                                                    </Text>
+                                                    <div className="flex">
+                                                        <Text className={`mt-0.5 text-xs opacity-50 ${msg.sender === auth.currentUser?.uid && 'ml-auto'}`}>
+                                                            {format(new Date(msg.timestamp.toDate()), 'HH:mm')}
+                                                        </Text>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    ))
+                                    );
+                                })}
+                            </div>
+                        ))}
+                    </>
                 )}
             </VStack>
-            <div className="w-full space-x-3 flex fixed md:static bottom-0 bg-white left-0 border-t md:border-none p-[12.5px] md:p-0">
-                <div className="flex">
-                    {!isAtTop && <Button icon={<FiArrowUp />} onClick={scrollToTop} />}
-                    {isAtTop && <Button icon={<FiArrowDown />} onClick={scrollToBottom} />}
-                </div>
-                <Input
-                    type="text"
-                    value={messageText}
-                    onChange={(e) => setMessageText(e.target.value)}
-                    placeholder="メッセージを入力"
-                />
-                <div className="hidden md:flex space-x-3">
-                    <Upload beforeUpload={handleBeforeUpload} showUploadList={false}>
-                        <Button icon={<FiUpload />} type="dashed" loading={isUploading}>
-                            {file ? 'アップロード済み' : 'アップロード'}
+                <div className="w-full space-x-2.5 flex fixed md:static bottom-0 bg-white left-0 border-t md:border-none p-[12.5px] md:p-0">
+                    {messages.length > 0 && (
+                        <div className="flex">
+                            {!isAtTop && <Button icon={<FiArrowUp />} onClick={scrollToTop} />}
+                            {isAtTop && <Button icon={<FiArrowDown />} onClick={scrollToBottom} />}
+                        </div>
+                    )}
+                    <Input
+                        type="text"
+                        value={messageText}
+                        onChange={(e) => setMessageText(e.target.value)}
+                        placeholder="メッセージを入力"
+                    />
+                    <div className="hidden md:flex space-x-3">
+                        <Upload beforeUpload={handleBeforeUpload} showUploadList={false}>
+                            <Button icon={<FiUpload />} type="dashed" loading={isUploading}>
+                                {file ? 'アップロード済み' : 'アップロード'}
+                            </Button>
+                        </Upload>
+                        <Button onClick={handleSendMessage} type="primary" loading={isSending}>
+                            送信
                         </Button>
-                    </Upload>
-                    <Button onClick={handleSendMessage} type="primary" loading={isSending}>
-                        送信
-                    </Button>
+                    </div>
+                    <div className='flex md:hidden space-x-3'>
+                        <Button icon={<FiNavigation />} onClick={handleSendMessage} type="primary" loading={isSending} />
+                        <Upload beforeUpload={handleBeforeUpload} showUploadList={false}>
+                            <Button icon={<FiUpload />} type="dashed" loading={isUploading} />
+                        </Upload>
+                    </div>
                 </div>
-                <div className='flex md:hidden space-x-3'>
-                    <Button icon={<FiNavigation />} onClick={handleSendMessage} type="primary" loading={isSending} />
-                    <Upload beforeUpload={handleBeforeUpload} showUploadList={false}>
-                        <Button icon={<FiUpload />} type="dashed" loading={isUploading} />
-                    </Upload>
-                </div>
-            </div>
         </div>
     );
 };

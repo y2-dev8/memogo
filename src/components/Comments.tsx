@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { auth, db } from '@/firebase/firebaseConfig';
 import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { Avatar, VStack, HStack, Divider, Spinner } from '@chakra-ui/react';
-import NextLink from 'next/link';
+import Link from 'next/link';
 import { Empty, Input, Button, message, Dropdown, Menu, Space } from 'antd';
 import { EllipsisOutlined } from '@ant-design/icons';
 
@@ -156,16 +156,16 @@ const Comments = ({ memoId }: CommentsProps) => {
                         <>
                             <div key={c.id} className="w-full flex">
                                 <div className="flex items-center mr-2.5">
-                                    <NextLink href={`/users/${c.userID}`} passHref>
+                                    <Link href={`/users/${c.userID}`} passHref>
                                         <Avatar src={c.photoURL} name={c.displayName} size="md" />
-                                    </NextLink>
+                                    </Link>
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center">
-                                            <NextLink href={`/users/${c.userID}`} passHref>
+                                            <Link href={`/users/${c.userID}`} passHref>
                                                 <p className="font-bold text-sm">{c.displayName}</p>
-                                            </NextLink>
+                                            </Link>
                                             <p className="ml-2.5 text-xs text-gray-500 opacity-50">{new Date(c.createdAt.seconds * 1000).toLocaleString()}</p>
                                         </div>
                                         {currentUser?.uid === c.userId && (

@@ -138,7 +138,7 @@ const GroupChatPage = () => {
                     </div>
                     <div className="flex flex-col lg:flex-row items-center justify-center mb-2.5">
                         <div className="flex flex-col items-center lg:w-1/2">
-                            <div className="w-10 h-10 bg-blue-500 rounded-full mb-1.5 flex items-center justify-center">
+                            <div className="w-10 h-10 bg-blue-500 rounded-full mb-1.5 flex items-center justify-center shadow-sm">
                                 <p className="text-md text-white font-semibold">1</p>
                             </div>
                             <p className="font-bold text-3xl">目に優しいUI</p>
@@ -153,7 +153,7 @@ const GroupChatPage = () => {
                             <Image src="https://opendoodles.s3-us-west-1.amazonaws.com/unboxing.svg" className="h-80" />
                         </div>
                         <div className="flex flex-col items-center lg:w-1/2">
-                            <div className="w-10 h-10 bg-blue-500 rounded-full mb-1.5 flex items-center justify-center">
+                            <div className="w-10 h-10 bg-blue-500 rounded-full mb-1.5 flex items-center justify-center shadow-sm">
                                 <p className="text-md text-white font-semibold">2</p>
                             </div>
                             <p className="font-bold text-3xl">グループ機能</p>
