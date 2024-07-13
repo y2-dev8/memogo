@@ -9,7 +9,6 @@ import { FiChevronLeft } from "react-icons/fi";
 
 const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: string }) => {
     const [rooms, setRooms] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
     const [isSelectOpen, setIsSelectOpen] = useState(false);
     const [isJoinOpen, setIsJoinOpen] = useState(false);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -33,13 +32,11 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
 
     useEffect(() => {
         const fetchRooms = async () => {
-            setLoading(true);
             const roomsRef = collection(db, 'groupsInfo');
             const q = query(roomsRef, where('participants', 'array-contains', userId));
             const querySnapshot = await getDocs(q);
             const roomList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setRooms(roomList);
-            setLoading(false);
         };
 
         if (userId) {
@@ -332,10 +329,10 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                     placeholder="グループID"
                     value={groupID}
                     onChange={(e) => setGroupID(e.target.value)}
-                    className="mb-2.5"
+                    className="mb-5"
                 />
-                <div className="flex items-center mt-[10px]">
-                    <span className="mr-[10px]">パスワードを設定する</span>
+                <div className="flex items-center">
+                    <span className="mr-2.5">パスワードを設定する</span>
                     <Switch checked={isPasswordProtected} onChange={setIsPasswordProtected} />
                 </div>
                 {isPasswordProtected && (
@@ -344,7 +341,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                         type="password"
                         value={groupPassword}
                         onChange={(e) => setGroupPassword(e.target.value)}
-                        className="mt-[10px]"
+                        className="mt-2.5"
                     />
                 )}
             </Modal>
@@ -364,7 +361,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                     className="mb-2.5"
                 />
                 <div className="flex items-center">
-                    <span className="mr-[10px]">パスワードが必要</span>
+                    <span className="mr-2.5">パスワードが必要</span>
                     <Switch checked={isJoinPasswordRequired} onChange={setIsJoinPasswordRequired} />
                 </div>
                 {isJoinPasswordRequired && (
@@ -373,7 +370,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                         type="password"
                         value={joinGroupPassword}
                         onChange={(e) => setJoinGroupPassword(e.target.value)}
-                        className="mt-[10px]"
+                        className="mt-2.5"
                     />
                 )}
             </Modal>
@@ -398,7 +395,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
             >
                 <Select
                     placeholder="グループを選択"
-                    style={{ width: '100%' }}
+                    className="w-full"
                     onChange={handleLeaveSelect}
                 >
                     {rooms.map((room) => (

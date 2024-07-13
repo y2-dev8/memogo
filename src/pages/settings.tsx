@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { db, auth, storage } from '@/firebase/firebaseConfig';
-import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, deleteDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { deleteUser, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Avatar, useDisclosure } from '@chakra-ui/react';
@@ -11,14 +11,14 @@ import Head from 'next/head';
 import getCroppedImg from "@/utils/cropImage";
 import FileInput from '@/components/settings/FileInput';
 import CropModal from '@/components/settings/CropModal';
-import DeleteAccountDialog from '@/components/settings/DeleteAccountDialog';
-import { Form, Input, Button, Empty, message, Card, Row, Col, Spin, Image, Dropdown, Menu, Upload, UploadProps } from "antd";
+import { Form, Input, Button, message, Card, Row, Col, Spin, Image, Dropdown, Menu, Upload, UploadProps, Modal, Typography } from "antd";
 import { InboxOutlined } from '@ant-design/icons';
-import { FcGoogle } from "react-icons/fc"
+import { FcGoogle } from "react-icons/fc";
 import { FiTrash, FiUpload } from 'react-icons/fi';
 
 const { TextArea } = Input;
 const { Dragger } = Upload;
+const { Text } = Typography;
 
 const Settings = () => {
     useAuthRedirect();
@@ -157,12 +157,27 @@ const Settings = () => {
 
     const deleteAccount = async () => {
         if (currentUser) {
-            setProcessing(prev => ({ ...prev, delete: true }));
-            await deleteDoc(doc(db, 'users', currentUser.uid));
-            await deleteUser(currentUser);
-            setProcessing(prev => ({ ...prev, delete: false }));
-            showMessage("アカウントが削除されました。", "success");
-            router.push('/register');
+            try {
+                setProcessing(prev => ({ ...prev, delete: true }));
+                
+                // ユーザーの情報を削除する
+                const userDocsQuery = query(collection(db, 'users'), where('uid', '==', currentUser.uid));
+                const userDocsSnapshot = await getDocs(userDocsQuery);
+                userDocsSnapshot.forEach(async (userDoc) => {
+                    await deleteDoc(userDoc.ref);
+                });
+                
+                // Firebase Authenticationからユーザーを削除する
+                await deleteUser(currentUser);
+                
+                setProcessing(prev => ({ ...prev, delete: false }));
+                showMessage("アカウントが削除されました。", "success");
+                router.push('/thanks');
+            } catch (error) {
+                console.error(error);
+                setProcessing(prev => ({ ...prev, delete: false }));
+                showMessage("アカウントの削除に失敗しました。", "error");
+            }
         }
     };
 
@@ -347,13 +362,17 @@ const Settings = () => {
                 processingKey='avatar'
                 processing={processing}
             />
-            <DeleteAccountDialog
-                isOpen={isDeleteDialogOpen}
-                onClose={onCloseDeleteDialog}
-                onDelete={deleteAccount}
-                cancelRef={cancelRef}
-                processing={processing}
-            />
+            <Modal
+                title="アカウントを削除する"
+                visible={isDeleteDialogOpen}
+                onOk={deleteAccount}
+                onCancel={onCloseDeleteDialog}
+                okButtonProps={{ danger: true, loading: processing.delete }}
+                okText="Delete"
+                centered
+            >
+                <Text>本当にアカウントを削除しますか？この操作は取り消せません。</Text>
+            </Modal>
         </div>
     );
 };
