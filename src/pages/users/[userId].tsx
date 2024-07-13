@@ -182,9 +182,8 @@ const UserPage = () => {
                 </div>
                 <div className="mt-10">
                     {memos.length === 0 ? (
-                        <div className="flex flex-col justify-center text-center">
-                            {/* <img src="https://opendoodles.s3-us-west-1.amazonaws.com/clumsy.svg" className="h-60 opacity-50 mb-5" /> */}
-                            <p className="text-lg opacity-50 font-semibold">メモが見つかりませんでした</p>
+                        <div className="flex text-center">
+                            <p className="text-lg text-gray-500 opacity-50 font-semibold">メモが見つかりませんでした</p>
                         </div>
                     ) : (
                         <List
