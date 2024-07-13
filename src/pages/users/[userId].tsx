@@ -182,7 +182,7 @@ const UserPage = () => {
                 </div>
                 <div className="mt-10">
                     {memos.length === 0 ? (
-                        <div className="flex text-center">
+                        <div className="flex justify-center text-center">
                             <p className="text-lg text-gray-500 opacity-50 font-semibold">メモが見つかりませんでした</p>
                         </div>
                     ) : (
