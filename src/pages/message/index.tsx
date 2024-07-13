@@ -132,9 +132,9 @@ const GroupChatPage = () => {
                             <p className="text-md text-gray-500 mt-5">親しみやすいUIとUXでチームの作業体験をより向上させることができます。</p>
                         </div>
                     </div>
-                    <div className="flex flex-col md:flex-row mb-10">
-                        <Button onClick={onOpen} className="w-full mb-3 md:mb-0 md:mr-3" type='dashed'>ルームに参加する</Button>
-                        <Button onClick={onCreateOpen} className="w-full" type='primary'>ルームを作成する</Button>
+                    <div className="flex flex-col md:flex-row mb-10 space-y-3 md:space-y-0 md:space-x-3">
+                        <Button onClick={onCreateOpen} type='primary'>ルームを作成する</Button>
+                        <Button onClick={onOpen} type='dashed'>ルームに参加する</Button>
                     </div>
                     <div className="flex flex-col lg:flex-row items-center justify-center mb-2.5">
                         <div className="flex flex-col items-center lg:w-1/2">
