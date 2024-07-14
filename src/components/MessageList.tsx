@@ -18,7 +18,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, users, userIDs, scr
         const parts = message.split(stampRegex);
 
         return (
-            <div className="flex flex-wrap">
+            <div className="flex flex-wrap items-center">
                 {parts.map((part, index) => {
                     if (index % 2 === 1) {
                         return (

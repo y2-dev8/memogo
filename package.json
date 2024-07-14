@@ -21,6 +21,7 @@
     "framer-motion": "^11.2.14",
     "fuse.js": "^7.0.0",
     "github-markdown-css": "^5.6.1",
+    "link-preview-js": "^3.0.5",
     "next": "14.2.4",
     "rc-util": "^5.20.0",
     "react": "^18",
