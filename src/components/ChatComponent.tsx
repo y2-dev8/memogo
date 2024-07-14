@@ -173,10 +173,10 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
                         </div>
                     </div>
                 ) : (
-                    <MessageList 
-                        messages={messages} 
-                        users={users} 
-                        userIDs={userIDs} 
+                    <MessageList
+                        messages={messages}
+                        users={users}
+                        userIDs={userIDs}
                         scrollToBottom={scrollToBottom}
                     />
                 )}

@@ -3,7 +3,7 @@ import { auth, db } from '@/firebase/firebaseConfig';
 import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { Avatar, VStack, HStack, Divider, Spinner } from '@chakra-ui/react';
 import Link from 'next/link';
-import { Empty, Input, Button, message, Dropdown, Menu, Space } from 'antd';
+import { Empty, Input, Button, message, Dropdown, Menu } from 'antd';
 import { EllipsisOutlined } from '@ant-design/icons';
 
 interface Comment {
@@ -45,7 +45,7 @@ const Comments = ({ memoId }: CommentsProps) => {
                 const userData = userDoc.data();
                 return {
                     displayName: userData.displayName || '匿名',
-                    photoURL: userData.photoURL || '/default-avatar.png',
+                    photoURL: userData.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${userData.displayName?.length || userId.length}`,
                     userID: userData.userID || userId
                 };
             }
@@ -54,7 +54,7 @@ const Comments = ({ memoId }: CommentsProps) => {
         }
         return {
             displayName: '匿名',
-            photoURL: '/default-avatar.png',
+            photoURL: `https://api.dicebear.com/9.x/thumbs/svg?seed=${userId.length}`,
             userID: userId
         };
     };
@@ -172,7 +172,7 @@ const Comments = ({ memoId }: CommentsProps) => {
                                             <Dropdown
                                                 overlay={(
                                                     <Menu>
-                                                        <Menu.Item onClick={() => handleDeleteComment(c.id)}>
+                                                        <Menu.Item onClick={() => handleDeleteComment(c.id)} danger>
                                                             削除
                                                         </Menu.Item>
                                                     </Menu>

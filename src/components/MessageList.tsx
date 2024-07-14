@@ -17,16 +17,20 @@ const MessageList: React.FC<MessageListProps> = ({ messages, users, userIDs, scr
         const stampRegex = /\[stamp:([^\]]+)\]/g;
         const parts = message.split(stampRegex);
 
-        return parts.map((part, index) => {
-            if (index % 2 === 1) {
-                return (
-                    <div className="inline-block w-10" key={index}>
-                        <img src={`https://api.dicebear.com/9.x/croodles/svg?seed=${part}`} className="inline-block" />
-                    </div>
-                );
-            }
-            return <span key={index}>{part}</span>;
-        });
+        return (
+            <div className="flex flex-wrap">
+                {parts.map((part, index) => {
+                    if (index % 2 === 1) {
+                        return (
+                            <div className="inline-block w-10 select-none" key={index}>
+                                <img src={`https://api.dicebear.com/9.x/croodles/svg?seed=${part}`} className="inline-block" draggable="false" />
+                            </div>
+                        );
+                    }
+                    return <span key={index}>{part}</span>;
+                })}
+            </div>
+        );
     };
 
     const groupMessagesByDate = (messages: Message[]) => {
@@ -64,7 +68,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, users, userIDs, scr
                                             src={user?.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${user?.displayName.length}`}
                                             name={user?.displayName}
                                             size="sm"
-                                            className="mr-1.5"
+                                            className="mr-1.5 select-none"
                                         />
                                     </Link>
                                 )}
@@ -73,7 +77,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, users, userIDs, scr
                                         <div className="space-y-1.5">
                                             <p className="flex items-center">{renderMessageContent(msg.message)}</p>
                                             {msg.fileURL && (
-                                                <Image src={msg.fileURL} className='max-w-60' />
+                                                <Image src={msg.fileURL} className='max-w-60 select-none' />
                                             )}
                                         </div>
                                     </div>
