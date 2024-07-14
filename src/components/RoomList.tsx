@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { auth, db } from '@/firebase/firebaseConfig';
-import { collection, query, where, getDocs, updateDoc, addDoc, doc, arrayRemove, arrayUnion } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, setDoc, addDoc, doc, arrayRemove, arrayUnion } from 'firebase/firestore';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
 import { Button, Modal, Input, List, message, Drawer, Typography, Space, Avatar, Tooltip, Select, Dropdown, Menu, Switch } from 'antd';
@@ -32,7 +32,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
 
     useEffect(() => {
         const fetchRooms = async () => {
-            const roomsRef = collection(db, 'InfoNest');
+            const roomsRef = collection(db, 'groups');
             const q = query(roomsRef, where('participants', 'array-contains', userId));
             const querySnapshot = await getDocs(q);
             const roomList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -45,7 +45,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
     }, [userId]);
 
     const fetchRooms = async () => {
-        const roomsRef = collection(db, 'InfoNest');
+        const roomsRef = collection(db, 'groups');
         const q = query(roomsRef, where('participants', 'array-contains', userId));
         const querySnapshot = await getDocs(q);
         const roomList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -55,7 +55,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
     const handleJoinGroup = async () => {
         setJoinLoading(true);
         try {
-            const groupIDQuery = query(collection(db, 'InfoNest'), where('groupID', '==', joinGroupID));
+            const groupIDQuery = query(collection(db, 'groups'), where('groupID', '==', joinGroupID));
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (groupIDSnapshot.empty) {
@@ -105,7 +105,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
         }
 
         try {
-            const groupIDQuery = query(collection(db, 'InfoNest'), where('groupID', '==', groupID));
+            const groupIDQuery = query(collection(db, 'groups'), where('groupID', '==', groupID));
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (!groupIDSnapshot.empty) {
@@ -114,7 +114,8 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                 return;
             }
 
-            await addDoc(collection(db, 'InfoNest'), {
+            const newGroupRef = doc(collection(db, 'groups'), groupID);
+            await setDoc(newGroupRef, {
                 groupName,
                 groupID,
                 password: isPasswordProtected ? groupPassword : '',
@@ -138,7 +139,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
         if (!selectedLeaveRoomID) return;
 
         try {
-            const groupDoc = doc(db, 'InfoNest', selectedLeaveRoomID);
+            const groupDoc = doc(db, 'groups', selectedLeaveRoomID);
             await updateDoc(groupDoc, {
                 participants: arrayRemove(auth.currentUser?.uid)
             });

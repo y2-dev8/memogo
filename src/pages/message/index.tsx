@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { auth, db } from '@/firebase/firebaseConfig';
-import { collection, addDoc, getDocs, query, where, updateDoc, doc, arrayUnion } from 'firebase/firestore';
+import { collection, getDocs, query, where, updateDoc, doc, setDoc, arrayUnion } from 'firebase/firestore';
 import { useDisclosure, Image } from '@chakra-ui/react';
 import Layout from '@/components/Layout';
 import Head from 'next/head';
@@ -38,7 +38,7 @@ const GroupChatPage = () => {
         }
 
         try {
-            const groupIDQuery = query(collection(db, 'InfoNest'), where('groupID', '==', joinGroupID));
+            const groupIDQuery = query(collection(db, 'groups'), where('groupID', '==', joinGroupID));
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (groupIDSnapshot.empty) {
@@ -80,7 +80,7 @@ const GroupChatPage = () => {
         }
 
         try {
-            const groupIDQuery = query(collection(db, 'InfoNest'), where('groupID', '==', groupID));
+            const groupIDQuery = query(collection(db, 'groups'), where('groupID', '==', groupID));
             const groupIDSnapshot = await getDocs(groupIDQuery);
 
             if (!groupIDSnapshot.empty) {
@@ -88,7 +88,8 @@ const GroupChatPage = () => {
                 return;
             }
 
-            await addDoc(collection(db, 'InfoNest'), {
+            const newGroupRef = doc(collection(db, 'groups'), groupID);
+            await setDoc(newGroupRef, {
                 groupName,
                 groupID,
                 password: isPasswordProtected ? groupPassword : '',
@@ -111,7 +112,7 @@ const GroupChatPage = () => {
                 return;
             }
 
-            const groupsQuery = query(collection(db, 'InfoNest'), where('participants', 'array-contains', auth.currentUser.uid));
+            const groupsQuery = query(collection(db, 'groups'), where('participants', 'array-contains', auth.currentUser.uid));
             const groupsSnapshot = await getDocs(groupsQuery);
 
             if (!groupsSnapshot.empty) {
