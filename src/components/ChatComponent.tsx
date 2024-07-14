@@ -5,28 +5,24 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Text, VStack, Avatar } from '@chakra-ui/react';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { Empty, Input, Button, Upload, message, Image, Divider } from "antd";
-import { FiUpload, FiNavigation, FiArrowUp, FiArrowDown } from "react-icons/fi";
+import { Empty, Input, Button, Upload, message, Image, Divider, Dropdown, Menu } from "antd";
+import { FiUpload, FiNavigation, FiArrowUp, FiArrowDown, FiSmile } from "react-icons/fi";
 import { useRouter } from 'next/router';
-
-interface Message {
-    id: string;
-    message: string;
-    fileURL?: string;
-    sender: string;
-    timestamp: any;
-}
-
-interface User {
-    displayName: string;
-    photoURL: string;
-}
+import MessageList from './MessageList';
+import { Message, User } from '@/types';
 
 interface ChatComponentProps {
     groupId: string;
     currentUser: any;
     userIDs: { [key: string]: string };
 }
+
+const stampNames = [
+    "Jack", "Bandit", "Kiki", "Harley", "Max",
+    "Coco", "Cookie", "Boots", "Bubba", "Buster",
+    "Loki", "Sassy", "Chester", "Snuggles", "Abby",
+    "Fluffy", "Sam", "Cuddles", "Shadow", "Milo"
+];
 
 const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, userIDs }) => {
     const [messageText, setMessageText] = useState<string>('');
@@ -147,21 +143,19 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
         return false;
     };
 
-    const groupMessagesByDate = (messages: Message[]) => {
-        const groupedMessages: { [key: string]: Message[] } = {};
-
-        messages.forEach((message) => {
-            const dateKey = format(new Date(message.timestamp.toDate()), 'yyyy-MM-dd');
-            if (!groupedMessages[dateKey]) {
-                groupedMessages[dateKey] = [];
-            }
-            groupedMessages[dateKey].push(message);
-        });
-
-        return groupedMessages;
+    const handleStampSelect = ({ key }: { key: string }) => {
+        setMessageText(prev => prev + `[stamp:${key}]`);
     };
 
-    const groupedMessages = groupMessagesByDate(messages);
+    const stampMenu = (
+        <div className="grid grid-cols-5 bg-white border rounded-md overflow-hidden">
+            {stampNames.map(name => (
+                <div key={name} onClick={() => handleStampSelect({ key: name })} className="cursor-pointer hover:bg-gray-100">
+                    <img src={`https://api.dicebear.com/9.x/croodles/svg?seed=${name}`} className="h-20" />
+                </div>
+            ))}
+        </div>
+    );
 
     return (
         <div className="w-full">
@@ -179,57 +173,12 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
                         </div>
                     </div>
                 ) : (
-                    <>
-                        {Object.keys(groupedMessages).map((dateKey) => (
-                            <div key={dateKey} className="space-y-[12.5px]">
-                                <div className="flex justify-center">
-                                    <Divider>
-                                        <Text className="bg-blue-50 text-xs text-blue-500 px-1.5 rounded-full">
-                                            {format(new Date(dateKey), 'MMMM dd')}
-                                        </Text>
-                                    </Divider>
-                                </div>
-                                {groupedMessages[dateKey].map((msg, index) => {
-                                    const user = users[msg.sender];
-                                    return (
-                                        <div key={msg.id}>
-                                            <div className="flex">
-                                                {msg.sender !== auth.currentUser?.uid && (
-                                                    <Link href={`/users/${userIDs[msg.sender]}`}>
-                                                        <Avatar
-                                                            src={user?.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${user?.displayName.length}`} 
-                                                            name={user?.displayName}
-                                                            size="sm"
-                                                            className="mr-1.5"
-                                                        />
-                                                    </Link>
-                                                )}
-                                                <div className={msg.sender === auth.currentUser?.uid ? 'ml-auto' : ''}>
-                                                    <div
-                                                        className={`w-fit px-[12.5px] py-2.5 rounded-md ${
-                                                            msg.sender === auth.currentUser?.uid ? 'bg-blue-100' : 'bg-gray-50'
-                                                        }`}
-                                                    >
-                                                        <div className="space-y-1.5">
-                                                            <Text>{msg.message}</Text>
-                                                            {msg.fileURL && (
-                                                                <Image src={msg.fileURL} className='max-w-60' />
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex">
-                                                        <Text className={`mt-0.5 text-xs opacity-50 ${msg.sender === auth.currentUser?.uid && 'ml-auto'}`}>
-                                                            {format(new Date(msg.timestamp.toDate()), 'HH:mm')}
-                                                        </Text>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ))}
-                    </>
+                    <MessageList 
+                        messages={messages} 
+                        users={users} 
+                        userIDs={userIDs} 
+                        scrollToBottom={scrollToBottom}
+                    />
                 )}
             </VStack>
             <div className="w-full space-x-2.5 flex fixed md:static bottom-0 bg-white left-0 border-t md:border-none p-[12.5px] md:p-0">
@@ -246,6 +195,9 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
                     placeholder="メッセージを入力"
                 />
                 <div className="hidden md:flex space-x-2.5">
+                    <Dropdown overlay={stampMenu} trigger={['click']}>
+                        <Button icon={<FiSmile />} type="dashed" />
+                    </Dropdown>
                     <Upload beforeUpload={handleBeforeUpload} showUploadList={false}>
                         <Button icon={<FiUpload />} type="dashed" loading={isUploading}>
                             {file ? 'アップロード済み' : 'アップロード'}
@@ -256,6 +208,9 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ groupId, currentUser, use
                     </Button>
                 </div>
                 <div className='flex md:hidden space-x-3'>
+                    <Dropdown overlay={stampMenu} trigger={['click']}>
+                        <Button icon={<FiSmile />} type="dashed" />
+                    </Dropdown>
                     <Button icon={<FiNavigation />} onClick={handleSendMessage} type="primary" loading={isSending} />
                     <Upload beforeUpload={handleBeforeUpload} showUploadList={false}>
                         <Button icon={<FiUpload />} type="dashed" loading={isUploading} />
