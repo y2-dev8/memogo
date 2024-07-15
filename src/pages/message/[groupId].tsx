@@ -44,7 +44,7 @@ const GroupChat = () => {
     }
 
     return (
-        <div className='w-[90%] mx-auto md:my-10'>
+        <div className='w-[90%] mx-auto my-10 md:my-0'>
             <Head>
                 <title>Message</title>
             </Head>

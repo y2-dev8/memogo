@@ -222,7 +222,7 @@ const Register = () => {
                     <div className="mt-5 w-full text-center">
                         <p>
                             既にアカウントを持っていますか？
-                            <Link href="/login" className="text-blue-500 hover:text-blue-500 hover:underline">
+                            <Link href="/login" className="ml-0.5 text-blue-500 hover:text-blue-500 hover:underline">
                                 ログイン
                             </Link>
                         </p>

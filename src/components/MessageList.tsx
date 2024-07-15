@@ -1,9 +1,9 @@
 import { format } from 'date-fns';
-import { Avatar, Text } from '@chakra-ui/react';
+import { Avatar } from '@chakra-ui/react';
 import Link from 'next/link';
 import { auth } from '@/firebase/firebaseConfig';
 import { Message, User } from '@/types';
-import { Image } from "antd";
+import { Divider, Image } from "antd";
 
 interface MessageListProps {
     messages: Message[];
@@ -54,9 +54,11 @@ const MessageList: React.FC<MessageListProps> = ({ messages, users, userIDs, scr
             {Object.keys(groupedMessages).map((dateKey) => (
                 <div key={dateKey} className="space-y-[12.5px]">
                     <div className="flex justify-center">
-                        <Text className="bg-blue-50 text-xs text-blue-500 px-1.5 rounded-full">
-                            {format(new Date(dateKey), 'MMMM dd')}
-                        </Text>
+                        <Divider>
+                            <p className="bg-blue-50 text-xs text-blue-500 px-1.5 rounded-full">
+                                {format(new Date(dateKey), 'MMMM dd')}
+                            </p>
+                        </Divider>
                     </div>
                     {groupedMessages[dateKey].map((msg) => {
                         const user = users[msg.sender];
@@ -82,9 +84,9 @@ const MessageList: React.FC<MessageListProps> = ({ messages, users, userIDs, scr
                                         </div>
                                     </div>
                                     <div className="flex">
-                                        <Text className={`mt-0.5 text-xs opacity-50 ${msg.sender === auth.currentUser?.uid && 'ml-auto'}`}>
+                                        <p className={`mt-0.5 text-xs opacity-50 ${msg.sender === auth.currentUser?.uid && 'ml-auto'}`}>
                                             {format(new Date(msg.timestamp.toDate()), 'HH:mm')}
-                                        </Text>
+                                        </p>
                                     </div>
                                 </div>
                             </div>

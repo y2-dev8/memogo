@@ -146,7 +146,7 @@ const UserPage = () => {
     const avatarSrc = user?.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${user?.displayName.length}`;
 
     return (
-        <div className="container mx-auto my-10">
+        <div className="container mx-auto my-10 md:my-5">
             <Head><title>{user?.displayName}</title></Head>
             <Layout>
                 {user?.headerPhotoURL && (

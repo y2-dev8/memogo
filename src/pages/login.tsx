@@ -80,12 +80,12 @@ const Login = () => {
                         ログイン
                     </Button>
                     <div className="mt-5 w-full text-center">
-                        <Text>
+                        <p>
                             アカウントを持っていませんか？
-                            <Link href="/register" className="text-blue-500 hover:text-blue-500 hover:underline">
+                            <Link href="/register" className="ml-0.5 text-blue-500 hover:text-blue-500 hover:underline">
                                 新規登録
                             </Link>
-                        </Text>
+                        </p>
                     </div>
                 </Card>
             </Layout>
