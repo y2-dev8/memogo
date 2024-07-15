@@ -81,9 +81,11 @@ const MessageList: React.FC<MessageListProps> = ({ messages, users, userIDs, scr
                                             )}
                                         </div>
                                     </div>
-                                    <Text className={`mt-0.5 text-xs opacity-50 ${msg.sender === auth.currentUser?.uid && 'ml-auto'}`}>
-                                        {format(new Date(msg.timestamp.toDate()), 'HH:mm')}
-                                    </Text>
+                                    <div className="flex">
+                                        <Text className={`mt-0.5 text-xs opacity-50 ${msg.sender === auth.currentUser?.uid && 'ml-auto'}`}>
+                                            {format(new Date(msg.timestamp.toDate()), 'HH:mm')}
+                                        </Text>
+                                    </div>
                                 </div>
                             </div>
                         );
