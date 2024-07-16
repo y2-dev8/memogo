@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react';
 import { auth, db } from '@/firebase/firebaseConfig';
 import { collection, query, where, getDocs, addDoc, deleteDoc } from 'firebase/firestore';
 import Link from 'next/link';
-import Layout from '@/components/Layout';
 import Head from 'next/head';
-import { Button, Empty, Spin, Image, List, Card } from "antd";
+import { Button, Spin, Image, List, Card } from "antd";
 import { Avatar } from "@chakra-ui/react";
+import Body from '@/components/Body';
 
 interface User {
     photoURL: string;
@@ -146,16 +146,15 @@ const UserPage = () => {
     const avatarSrc = user?.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${user?.displayName.length}`;
 
     return (
-        <div className="container mx-auto my-10 md:my-5">
+        <Body>
             <Head><title>{user?.displayName}</title></Head>
-            <Layout>
                 {user?.headerPhotoURL && (
                     <div className="mb-5">
                         <Image src={user.headerPhotoURL} className="w-full h-auto" />
                     </div>
                 )}
                 <div className="contents lg:flex items-center space-y-5 lg:space-y-0 lg:space-x-5">
-                    <Avatar src={avatarSrc} name={user?.displayName} size="xl" />
+                    <Avatar src={avatarSrc} name={user?.displayName} size="xl" className="select-none" />
                         <div className="w-full flex items-center">
                             <div>
                                 <p className="text-lg font-bold">{user?.displayName}</p>
@@ -203,8 +202,7 @@ const UserPage = () => {
                         />
                     )}
                 </div>
-            </Layout>
-        </div>
+        </Body>
     );
 };
 
