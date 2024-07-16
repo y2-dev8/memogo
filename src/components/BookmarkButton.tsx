@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { auth, db } from '@/firebase/firebaseConfig';
 import { doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
-import { Button, useToast } from '@chakra-ui/react';
+import { Button, message } from 'antd';
+import { FiBookmark } from 'react-icons/fi';
 import { FaBookmark } from 'react-icons/fa';
 
 type BookmarkButtonProps = {
@@ -11,7 +12,6 @@ type BookmarkButtonProps = {
 const BookmarkButton = ({ memoId }: BookmarkButtonProps) => {
     const [bookmarked, setBookmarked] = useState(false);
     const currentUser = auth.currentUser;
-    const toast = useToast();
 
     useEffect(() => {
         const fetchBookmark = async () => {
@@ -31,55 +31,29 @@ const BookmarkButton = ({ memoId }: BookmarkButtonProps) => {
         try {
             if (bookmarked) {
                 await deleteDoc(docRef);
-                toast({
-                    title: 'ブックマークを解除しました。',
-                    status: 'success',
-                    duration: 5000,
-                    isClosable: true,
-                });
+                message.success('ブックマークを解除しました。');
             } else {
                 await setDoc(docRef, {
                     userId: currentUser.uid,
                     memoId,
                     createdAt: new Date()
                 });
-                toast({
-                    title: 'ブックマークしました。',
-                    status: 'success',
-                    duration: 5000,
-                    isClosable: true,
-                });
+                message.success('ブックマークしました。');
             }
             setBookmarked(!bookmarked);
         } catch (error) {
             console.error('ブックマークの操作中にエラーが発生しました:', error);
-            toast({
-                title: 'エラー',
-                description: 'ブックマークの操作中にエラーが発生しました。',
-                status: 'error',
-                duration: 5000,
-                isClosable: true,
-            });
+            message.error('ブックマークの操作中にエラーが発生しました。');
         }
     };
 
     return (
         <Button
             onClick={handleBookmark}
-            background="none"
-            border="none"
-            p="0"
-            minW="auto"
-            height="auto"
-            sx={{
-                '&:hover': {
-                    background: 'none',
-                    color: 'inherit',
-                },
-            }}
-        >
-            <FaBookmark className={`${bookmarked ? 'text-yellow-500' : 'text-slate-300'}`} />
-        </Button>
+            className="bg-transparent border-none p-0 w-auto h-auto shadow-none"
+            size="large"
+            icon={bookmarked ? <FaBookmark className="text-yellow-500" /> : <FiBookmark className="text-gray-500 opacity-50" />}
+        />
     );
 };
 

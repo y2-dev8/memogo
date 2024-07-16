@@ -5,7 +5,8 @@ import { signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { getDoc, doc } from 'firebase/firestore';
 import { useRouter } from 'next/router';
 import { Button, Avatar, Dropdown, Menu, Divider } from 'antd';
-import { FiLogOut, FiSearch, FiSettings, FiUser } from 'react-icons/fi';
+import { FiList, FiLogOut, FiSearch, FiSettings, FiUser } from 'react-icons/fi';
+import { HappyProvider } from '@ant-design/happy-work-theme'
 
 export default function Header() {
     const router = useRouter();
@@ -54,6 +55,9 @@ export default function Header() {
             <Menu.Item key="profile" icon={<FiUser />}>
                 <Link href={`/users/${userID}`}>{displayName}</Link>
             </Menu.Item>
+            <Menu.Item key="list" icon={<FiList />}>
+                <Link href="/memo/list">メモリスト</Link>
+            </Menu.Item>
             <Menu.Item key="settings" icon={<FiSettings />}>
                 <Link href="/settings">設定</Link>
             </Menu.Item>
@@ -65,7 +69,7 @@ export default function Header() {
     );
 
     return (
-        <>
+        <HappyProvider>
             <div className="sticky z-50 bg-white px-5 py-2.5 hidden md:flex items-center">
                 <Link href="/" ><img src="/logo.png" className="w-[100px]" /></Link>
                 <div className="flex space-x-5 ml-5">
@@ -84,7 +88,7 @@ export default function Header() {
                         <>
                             <Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
                                 <div className="w-fit h-fit border rounded-full overflow-hidden cursor-pointer">
-                                    <Avatar src={photoURL} size="large" className="select-none" />
+                                    <Avatar src={photoURL} size="large" />
                                 </div>
                             </Dropdown>
                             <Button type="primary">
@@ -98,6 +102,6 @@ export default function Header() {
                     )}
                 </div>
             </div>
-        </>
+        </HappyProvider>
     );
 };

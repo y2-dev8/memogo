@@ -2,27 +2,17 @@ import { useRouter } from 'next/router';
 import { useEffect, useState, useRef } from 'react';
 import { db, auth } from '@/firebase/firebaseConfig';
 import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import LikeButton from '../components/LikeButton';
-import Comments from '../components/Comments';
-import BookmarkButton from '../components/BookmarkButton';
+import LikeButton from '@/components/LikeButton';
+import Comments from '@/components/Comments';
+import BookmarkButton from '@/components/BookmarkButton';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Head from 'next/head';
-import { DownOutlined, EllipsisOutlined } from '@ant-design/icons';
 import { FiMoreVertical, FiTrash, FiType } from "react-icons/fi";
-import {
-    Heading,
-    Text,
-    Divider,
-    Avatar,
-    HStack,
-    VStack,
-    Spinner,
-    Box
-} from '@chakra-ui/react';
-import { Menu, Dropdown, Button, Modal, Input, message, Spin } from 'antd';
+import { Menu, Dropdown, Button, Modal, Input, message, Spin, Divider, Avatar } from 'antd';
 import Layout from '@/components/Layout';
 import { onAuthStateChanged } from 'firebase/auth';
+import Body from '@/components/Body';
 import Link from 'next/link';
 
 const { TextArea } = Input;
@@ -191,95 +181,76 @@ const Memo = () => {
                     <title>{memoData.title}</title>
                 </Head>
             )}
-            <div className='container mx-auto my-10'>
+            <Body>
                 {memoData && (
-                    <Layout>
-                        <div className="flex flex-col mb-5 justify-center text-center">
-                            <Heading className="mb-2.5">{memoData.title}</Heading>
-                            <Text>{memoData.description}</Text>
-                            {memoData.userId !== currentUserId && authorData && (
-                                <Box className="p-3 w-full rounded-md mt-5 border">
-                                    <HStack spacing={3} align="center">
-                                        <Link href={`/users/${authorData.userID}`} passHref>
-                                            <Avatar src={authorData.photoURL} name={authorData.displayName} size="md" />
-                                        </Link>
-                                        <VStack align="start" spacing={0}>
-                                            <Link href={`/users/${authorData.userID}`} passHref>
-                                                <Text fontWeight="bold">{authorData.displayName}</Text>
-                                            </Link>
-                                        </VStack>
-                                    </HStack>
-                                </Box>
-                            )}
-                        </div>
-                        {memoData.userId === currentUserId && (
-                            <div className='my-5 flex justify-end'>
-                                <Dropdown overlay={menu} trigger={['click']}>
-                                    <Button>
-                                        詳細<FiMoreVertical />
-                                    </Button>
-                                </Dropdown>
-                                <Modal
-                                    title="メモの編集"
-                                    visible={isEditModalOpen}
-                                    onOk={handleEditOk}
-                                    onCancel={handleEditCancel}
-                                    okButtonProps={{ loading: isSaving }}
-                                    okText="Save"
-                                    centered
-                                >
-                                    <div className="space-y-2.5">
-                                        <Input
-                                            value={editTitle}
-                                            onChange={(e) => setEditTitle(e.target.value)}
-                                            placeholder="タイトル"
-                                        />
-                                        <Input
-                                            value={editDescription}
-                                            onChange={(e) => setEditDescription(e.target.value)}
-                                            placeholder="説明"
-                                        />
-                                        <TextArea
-                                            value={editContent}
-                                            onChange={(e) => setEditContent(e.target.value)}
-                                            placeholder="内容"
-                                            rows={10}
-                                        />
+                    <>
+                        <div className="flex flex-col space-y-1.5">
+                            <div className="flex items-center">
+                                <p className="text-[32px] font-semibold">{memoData.title}</p>
+                                {memoData.userId === currentUserId && (
+                                    <div className='ml-auto'>
+                                        <Dropdown overlay={menu} trigger={['click']}>
+                                            <Button icon={<FiMoreVertical />} />
+                                        </Dropdown>
                                     </div>
-                                </Modal>
-                                <Modal
-                                    title="メモの削除"
-                                    visible={isDeleteModalOpen}
-                                    onOk={handleDeleteOk}
-                                    onCancel={handleDeleteCancel}
-                                    okButtonProps={{ danger: true, loading: isDeleting }}
-                                    okText="Delete"
-                                    centered
-                                >
-                                    本当にこのメモを削除してもよろしいですか？ この操作は取り消せません。
-                                </Modal>
+                                )}
                             </div>
-                        )}
-                    </Layout>
+                            {memoData.userId !== currentUserId && authorData && (
+                                <Link href={`/users/${authorData.userID}`} className="flex items-center">
+                                    <Avatar src={authorData.photoURL} size="small" />
+                                    <p className="text-sm ml-1.5 text-blue-500">@{authorData.userID}</p>
+                                </Link>
+                            )}
+                            <p className="text-md">{memoData.description}</p>
+                        </div>
+
+                    </>
                 )}
-                <Layout>
+                    <Divider />
                     <div className="markdown-body">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                             {memoData ? memoData.content : ''}
                         </ReactMarkdown>
                     </div>
-                </Layout>
-                <Divider className='my-10' />
-                <Layout>
+                <Divider />
+                <>
                     {typeof id === 'string' && (
-                        <div>
-                            <LikeButton memoId={id} />
-                            <BookmarkButton memoId={id} />
+                        <>
+                            <div className="flex items-center">
+                                <LikeButton memoId={id} />
+                                <BookmarkButton memoId={id} />
+                            </div>
                             <Comments memoId={id} />
-                        </div>
+                        </>
                     )}
-                </Layout>
-            </div>
+                </>
+            </Body>
+            <Modal
+                title="メモの編集"
+                visible={isEditModalOpen}
+                onOk={handleEditOk}
+                onCancel={handleEditCancel}
+                okButtonProps={{ loading: isSaving }}
+                okText="Save"
+                centered
+            >
+                <div className="space-y-2.5">
+                    <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="タイトル"/>
+                    <Input value={editDescription} onChange={(e) => setEditDescription(e.target.value)} placeholder="説明"/>
+                    <TextArea value={editContent} onChange={(e) => setEditContent(e.target.value)} placeholder="内容" rows={10}/>
+                </div>
+            </Modal>
+            <Modal
+                title="メモの削除"
+                visible={isDeleteModalOpen}
+                onOk={handleDeleteOk}
+                onCancel={handleDeleteCancel}
+                okButtonProps={{ danger: true, loading: isDeleting }}
+                okText="Delete"
+                centered
+            >
+                本当にこのメモを削除してもよろしいですか？ この操作は取り消せません。
+            </Modal>
         </>
     );
 };

@@ -21,6 +21,7 @@ interface Memo {
     uid: string;
     title: string;
     description: string;
+    visibility: string;
 }
 
 const UserPage = () => {
@@ -59,7 +60,8 @@ const UserPage = () => {
             try {
                 const memosQuery = query(
                     collection(db, 'memos'), 
-                    where('userId', '==', uid)
+                    where('userId', '==', uid),
+                    where('visibility', '==', 'public') // 公開されているメモのみを取得
                 );
                 const querySnapshot = await getDocs(memosQuery);
                 if (!querySnapshot.empty) {
@@ -154,7 +156,7 @@ const UserPage = () => {
                     </div>
                 )}
                 <div className="contents lg:flex items-center space-y-5 lg:space-y-0 lg:space-x-5">
-                    <Avatar src={avatarSrc} name={user?.displayName} size="xl" className="select-none" />
+                    <Avatar src={avatarSrc} name={user?.displayName} size="xl" />
                         <div className="w-full flex items-center">
                             <div>
                                 <p className="text-lg font-bold">{user?.displayName}</p>

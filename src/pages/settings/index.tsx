@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { db, auth, storage } from '@/firebase/firebaseConfig';
 import { doc, getDoc, updateDoc, deleteDoc, collection, getDocs, query, where } from 'firebase/firestore';
-import { deleteUser, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'firebase/auth';
+import { deleteUser, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Avatar, useDisclosure } from '@chakra-ui/react';
 import Layout from '@/components/Layout';
@@ -15,6 +15,7 @@ import { Form, Input, Button, message, Card, Row, Col, Spin, Image, Dropdown, Me
 import { InboxOutlined } from '@ant-design/icons';
 import { FcGoogle } from "react-icons/fc";
 import { FiTrash, FiUpload } from 'react-icons/fi';
+import Body from '@/components/Body';
 
 const { TextArea } = Input;
 const { Dragger } = Upload;
@@ -46,6 +47,7 @@ const Settings = () => {
     });
 
     const { isOpen: isDeleteDialogOpen, onOpen: onOpenDeleteDialog, onClose: onCloseDeleteDialog } = useDisclosure();
+    const { isOpen: isReauthModalOpen, onOpen: onOpenReauthModal, onClose: onCloseReauthModal } = useDisclosure();
     const cancelRef = useRef(null);
 
     const currentUser = auth.currentUser;
@@ -155,6 +157,37 @@ const Settings = () => {
         onOpenDeleteDialog();
     };
 
+    const reauthenticate = async (password: string | null = null) => {
+        if (currentUser) {
+            const providerData = currentUser.providerData[0];
+            let credential;
+
+            if (providerData.providerId === 'password' && password) {
+                credential = EmailAuthProvider.credential(currentUser.email!, password);
+            } else if (providerData.providerId === 'google.com') {
+                const provider = new GoogleAuthProvider();
+                await signInWithPopup(auth, provider);
+                return;
+            }
+
+            if (credential) {
+                await reauthenticateWithCredential(currentUser, credential);
+            }
+        }
+    };
+
+    const handleReauthAndDelete = async (values: { password: string }) => {
+        try {
+            await reauthenticate(values.password);
+            deleteAccount();
+        } catch (error) {
+            console.error(error);
+            showMessage("再認証に失敗しました。", "error");
+        } finally {
+            onCloseReauthModal();
+        }
+    };
+
     const deleteAccount = async () => {
         if (currentUser) {
             try {
@@ -258,11 +291,10 @@ const Settings = () => {
     };
 
     return (
-        <div className="container mx-auto my-10">
+        <Body>
             <Head>
                 <title>Settings</title>
             </Head>
-            <Layout>
                 <div>
                     <FileInput onChange={handleFileChange} type='avatar' fileInputRef={avatarFileInput} />
                     <FileInput onChange={handleFileChange} type='header' fileInputRef={headerFileInput} />
@@ -333,7 +365,6 @@ const Settings = () => {
                         </Col>
                     </Row>
                 </div>
-            </Layout>
             <CropModal
                 isOpen={isCropping || croppingHeader}
                 onClose={() => { setIsCropping(false); setCroppingHeader(false); }}
@@ -371,9 +402,29 @@ const Settings = () => {
                 okText="Delete"
                 centered
             >
-                <Text>本当にアカウントを削除しますか？この操作は取り消せません。</Text>
+                <Text>この操作は取り消せません。</Text>
             </Modal>
-        </div>
+            <Modal
+                title="再認証"
+                visible={isReauthModalOpen}
+                onCancel={onCloseReauthModal}
+                footer={null}
+            >
+                <Form onFinish={handleReauthAndDelete}>
+                    <Form.Item
+                        name="password"
+                        rules={[{ required: true, message: 'パスワードを入力してください' }]}
+                    >
+                        <Input.Password placeholder="パスワード" />
+                    </Form.Item>
+                    <Form.Item className='flex justify-center'>
+                        <Button type="primary" htmlType="submit" loading={processing.delete}>
+                            再認証して削除
+                        </Button>
+                    </Form.Item>
+                </Form>
+            </Modal>
+        </Body>
     );
 };
 

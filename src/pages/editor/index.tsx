@@ -16,12 +16,15 @@ import {
     Row,
     Col,
     RadioChangeEvent,
+    Typography
 } from 'antd';
 import { onAuthStateChanged } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Layout from '@/components/Layout';
 import Head from 'next/head';
 import useAuthRedirect from '@/hooks/useAuthRedirect';
+import Body from '@/components/Body';
+import { FiUpload } from 'react-icons/fi';
 
 const { TextArea } = Input;
 const { TabPane } = Tabs;
@@ -29,8 +32,8 @@ const { TabPane } = Tabs;
 const Editor = () => {
     useAuthRedirect();
     const [content, setContent] = useState<string>('');
-    const [title, setTitle] = useState<string>('');
-    const [description, setDescription] = useState<string>('');
+    const [title, setTitle] = useState<string>('タイトルを編集');
+    const [description, setDescription] = useState<string>('説明文を編集');
     const [userId, setUserId] = useState<string | null>(null);
     const [imageUrl, setImageUrl] = useState<string>('');
     const [isUploading, setIsUploading] = useState(false);
@@ -72,8 +75,8 @@ const Editor = () => {
                 createdAt: new Date(),
             });
             message.success("メモが保存されました。");
-            setTitle('');
-            setDescription('');
+            setTitle('タイトルを編集');
+            setDescription('説明文を編集');
             setContent('');
             setImageUrl('');
             setVisibility('public');
@@ -144,74 +147,60 @@ const Editor = () => {
     if (loading) return <div className="w-full min-h-screen flex justify-center items-center"><Spin size="large" /></div>;
 
     return (
-        <div className="container mx-auto my-10">
+        <Body>
             <Head>
                 <title>Editor</title>
             </Head>
-            <Layout>
-                <Row gutter={[16, 16]}>
-                    <Col span={24}>
-                        <Input
-                            type="text"
-                            value={title}
-                            onChange={handleTitleChange}
-                            placeholder="タイトルを入力"
-                        />
-                    </Col>
-                    <Col span={24}>
-                        <Input
-                            value={description}
-                            onChange={handleDescriptionChange}
-                            placeholder="説明を入力"
-                            className="mb-5"
-                        />
-                    </Col>
-                    <Col span={24}>
-                        <Radio.Group onChange={handleVisibilityChange} value={visibility}>
-                            <Radio value="public">Public</Radio>
-                            <Radio value="private">Private</Radio>
-                        </Radio.Group>
-                    </Col>
-                    <Col span={24}>
-                        <Tabs defaultActiveKey="1">
-                            <TabPane tab="マークダウン" key="1">
-                                <div className="space-y-3">
-                                    <TextArea
-                                        value={content}
-                                        onChange={handleContentChange}
-                                        placeholder="メモの内容を入力..."
-                                        className="markdown"
-                                        autoSize={{ minRows: 10, maxRows: 20 }}
-                                    />
-                                    <Button onClick={openFileDialog} className="w-full" loading={isUploading} type="dashed">
-                                        Upload Image
-                                    </Button>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleImageChange}
-                                        ref={fileInputRef}
-                                        className="hidden"
-                                    />
-                                </div>
-                            </TabPane>
-                            <TabPane tab="プレビュー" key="2">
-                                <div className="markdown-body markdown">
-                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                        {content}
-                                    </ReactMarkdown>
-                                </div>
-                            </TabPane>
-                        </Tabs>
-                    </Col>
-                    <Col span={24}>
-                        <Button onClick={handlePublishClick} className="w-full mt-5" type="primary">
-                            Publish
-                        </Button>
-                    </Col>
-                </Row>
-            </Layout>
-
+                <div className="mb-5">
+                    <Typography.Title
+                        editable={{ onChange: setTitle }}
+                        level={1}
+                        style={{ margin: 0 }}
+                    >
+                        {title}
+                    </Typography.Title>
+                    <Typography.Title
+                        editable={{ onChange: setDescription }}
+                        level={5}
+                        style={{ margin: 0 }}
+                    >
+                        {description}
+                    </Typography.Title>
+                </div>
+                <div className="mb-5">
+                    <Radio.Group onChange={handleVisibilityChange} value={visibility}>
+                        <Radio value="public">Public</Radio>
+                        <Radio value="private">Private</Radio>
+                    </Radio.Group>
+                </div>
+                <div className="mb-5">
+                    <Tabs defaultActiveKey="1">
+                        <TabPane tab="マークダウン" key="1">
+                            <TextArea
+                                value={content}
+                                onChange={handleContentChange}
+                                placeholder="マークダウンを入力..."
+                                className="markdown mb-2.5"
+                                autoSize={{ minRows: 10, maxRows: 20 }}
+                            />
+                            <Button onClick={openFileDialog} className="w-full" loading={isUploading} type="dashed" icon={<FiUpload />}>
+                                画像をアップロード
+                            </Button>
+                        </TabPane>
+                        <TabPane tab="プレビュー" key="2">
+                            <div className="markdown-body markdown">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {content}
+                                </ReactMarkdown>
+                            </div>
+                        </TabPane>
+                    </Tabs>
+                </div>
+                <div>
+                    <Button onClick={handlePublishClick} className="w-full" type="primary">
+                        投稿する
+                    </Button>
+                </div>
             <Modal
                 title="メモを投稿する"
                 visible={isAlertOpen}
@@ -221,7 +210,6 @@ const Editor = () => {
                 okText="Publish"
                 centered
             >
-                <p>このメモを投稿しますか？</p>
             </Modal>
 
             <Modal
@@ -240,7 +228,14 @@ const Editor = () => {
                     </div>
                 </div>
             </Modal>
-        </div>
+            <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                        ref={fileInputRef}
+                                        className="hidden"
+                                    />
+        </Body>
     );
 };
 

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { auth, db } from '@/firebase/firebaseConfig';
 import { collection, addDoc, query, where, getDocs, serverTimestamp, doc, getDoc, deleteDoc } from 'firebase/firestore';
-import { Avatar, VStack, HStack, Divider, Spinner } from '@chakra-ui/react';
 import Link from 'next/link';
-import { Empty, Input, Button, message, Dropdown, Menu } from 'antd';
+import { Empty, Input, Button, message, Dropdown, Menu, Avatar, Divider } from 'antd';
 import { EllipsisOutlined } from '@ant-design/icons';
+import { formatDistanceToNow } from 'date-fns';
+import { ja } from 'date-fns/locale';
 
 interface Comment {
     id: string;
@@ -24,8 +25,6 @@ interface CommentsProps {
 const Comments = ({ memoId }: CommentsProps) => {
     const [comment, setComment] = useState<string>('');
     const [comments, setComments] = useState<Comment[]>([]);
-    const [displayName, setDisplayName] = useState<string>('匿名');
-    const [photoURL, setPhotoURL] = useState<string>('/default-avatar.png');
     const [loading, setLoading] = useState<boolean>(false);
     const [commentsLoaded, setCommentsLoaded] = useState<boolean>(false);
     const currentUser = auth.currentUser;
@@ -85,8 +84,6 @@ const Comments = ({ memoId }: CommentsProps) => {
         if (currentUser) {
             const setUserDetails = async () => {
                 const userDetails = await fetchUserDetails(currentUser.uid);
-                setDisplayName(userDetails.displayName);
-                setPhotoURL(userDetails.photoURL);
             };
             setUserDetails();
         }
@@ -95,7 +92,6 @@ const Comments = ({ memoId }: CommentsProps) => {
 
     const handleComment = async () => {
         if (!comment.trim()) {
-            showMessage("コメントを入力してください。", "error");
             return;
         }
 
@@ -155,18 +151,20 @@ const Comments = ({ memoId }: CommentsProps) => {
                     comments.map((c, index) => (
                         <>
                             <div key={c.id} className="w-full flex">
-                                <div className="flex items-center mr-2.5">
+                                <div className="flex mr-2.5">
                                     <Link href={`/users/${c.userID}`} passHref>
-                                        <Avatar src={c.photoURL} name={c.displayName} size="md" />
+                                        <Avatar src={c.photoURL} size={32} />
                                     </Link>
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center">
                                             <Link href={`/users/${c.userID}`} passHref>
-                                                <p className="font-bold text-sm">{c.displayName}</p>
+                                                <p className="font-bold text-md">{c.displayName}</p>
                                             </Link>
-                                            <p className="ml-2.5 text-xs text-gray-500 opacity-50">{new Date(c.createdAt.seconds * 1000).toLocaleString()}</p>
+                                            <p className="ml-2.5 text-xs text-gray-500">
+                                                {formatDistanceToNow(new Date(c.createdAt.seconds * 1000), { addSuffix: true, locale: ja })}
+                                            </p>
                                         </div>
                                         {currentUser?.uid === c.userId && (
                                             <Dropdown

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { auth, db } from '@/firebase/firebaseConfig';
-import { collection, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
+import { Button } from 'antd';
+import { FiHeart } from 'react-icons/fi';
 import { FaHeart } from 'react-icons/fa';
-import { Button, ButtonGroup, Text } from '@chakra-ui/react';
-import { HeartFilled } from "@ant-design/icons"
 
 interface LikeButtonProps {
     memoId: string;
@@ -58,26 +58,14 @@ const LikeButton: React.FC<LikeButtonProps> = ({ memoId }) => {
     };
 
     return (
-        <>
         <Button
             onClick={handleLike}
-            background="none"
-            border="none"
-            p="0"
-            minW="auto"
-            height="auto"
-            sx={{
-                '&:hover': {
-                    background: 'none',
-                    color: 'inherit',
-                },
-            }}
-            className="mr-3"
+            className="bg-transparent border-none p-0 w-auto h-auto shadow-none"
+            size="large"
+            icon={liked ? <FaHeart className="text-red-500" /> : <FiHeart className="text-gray-500 opacity-50" />}
         >
-            <HeartFilled className={`${liked ? 'text-red-500' : 'text-slate-300'} mr-1.5`} />
-            <Text className="text-slate-500">{likesCount}</Text>
+            {likesCount}
         </Button>
-        </>
     );
 };
 
