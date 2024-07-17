@@ -61,7 +61,7 @@ const GroupChatPage = () => {
 
             onClose();
             showMessage('グループの参加に成功しました。', 'success');
-            router.push(`/message/${joinGroupID}`);
+            router.push(`/m/${joinGroupID}`);
         } catch (error) {
             showMessage('グループの参加に失敗しました。', 'error');
             console.error('Error joining group:', error);
@@ -98,7 +98,7 @@ const GroupChatPage = () => {
 
             onCreateClose();
             showMessage('グループの作成に成功しました。', 'success');
-            router.push(`/message/${groupID}`);
+            router.push(`/m/${groupID}`);
         } catch (error) {
             showMessage('グループの作成に失敗しました。', 'error');
             console.error('Error creating group:', error);
@@ -117,7 +117,7 @@ const GroupChatPage = () => {
 
             if (!groupsSnapshot.empty) {
                 const firstGroup = groupsSnapshot.docs[0].data().groupID;
-                router.push(`/message/${firstGroup}`);
+                router.push(`/m/${firstGroup}`);
             } else {
                 setLoading(false);
             }

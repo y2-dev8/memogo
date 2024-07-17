@@ -23,7 +23,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, users, userIDs, scr
                     if (index % 2 === 1) {
                         return (
                             <div className="inline-block w-10 select-none" key={index}>
-                                <img src={`https://api.dicebear.com/9.x/croodles/svg?seed=${part}`} className="inline-block" draggable="false" />
+                                <img src={`https://api.dicebear.com/9.x/fun-emoji/svg?seed=${part}`} className="inline-block" draggable="false" />
                             </div>
                         );
                     }
@@ -65,7 +65,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, users, userIDs, scr
                         return (
                             <div key={msg.id} className="flex">
                                 {msg.sender !== auth.currentUser?.uid && (
-                                    <Link href={`/users/${userIDs[msg.sender]}`}>
+                                    <Link href={`/u/${userIDs[msg.sender]}`}>
                                         <Avatar
                                             src={user?.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${user?.displayName.length}`}
                                             name={user?.displayName}

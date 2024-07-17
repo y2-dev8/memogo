@@ -5,7 +5,6 @@ import { doc, getDoc, updateDoc, deleteDoc, collection, getDocs, query, where } 
 import { deleteUser, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Avatar, useDisclosure } from '@chakra-ui/react';
-import Layout from '@/components/Layout';
 import useAuthRedirect from '@/hooks/useAuthRedirect';
 import Head from 'next/head';
 import getCroppedImg from "@/utils/cropImage";
@@ -19,7 +18,6 @@ import Body from '@/components/Body';
 
 const { TextArea } = Input;
 const { Dragger } = Upload;
-const { Text } = Typography;
 
 const Settings = () => {
     useAuthRedirect();
@@ -402,7 +400,7 @@ const Settings = () => {
                 okText="Delete"
                 centered
             >
-                <Text>この操作は取り消せません。</Text>
+                この操作は取り消せません。
             </Modal>
             <Modal
                 title="再認証"

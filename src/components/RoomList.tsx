@@ -81,7 +81,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
             await fetchRooms();
             setIsJoinOpen(false);
             toast.success('グループの参加に成功しました。');
-            router.push(`/message/${joinGroupID}`);
+            router.push(`/m/${joinGroupID}`);
         } catch (error) {
             toast.error('グループの参加に失敗しました。');
             console.error('Error joining group:', error);
@@ -125,7 +125,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
             await fetchRooms();
             setIsCreateOpen(false);
             toast.success('グループを作成しました。');
-            router.push(`/message/${groupID}`);
+            router.push(`/m/${groupID}`);
         } catch (error) {
             toast.error('グループの作成に失敗しました。');
             console.error('Error creating group:', error);
@@ -249,7 +249,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                             ) : (
                                 <Tooltip title={room.groupName} placement="right">
                                     <Space>
-                                        <NextLink href={`/message/${room.groupID}`}>
+                                        <NextLink href={`/m/${room.groupID}`}>
                                             <Avatar
                                                 src={`https://api.dicebear.com/9.x/shapes/svg?seed=${room.groupName.length}`}
                                                 className={room.groupID === currentGroup ? 'avatar-square' : 'avatar-circle'}
@@ -281,7 +281,7 @@ const RoomList = ({ userId, currentGroup }: { userId: string; currentGroup: stri
                                     </div>
                                 ) : (
                                     <div className="flex items-center w-full">
-                                        <NextLink href={`/message/${room.groupID}`}>
+                                        <NextLink href={`/m/${room.groupID}`}>
                                             <Avatar
                                                 src={`https://api.dicebear.com/9.x/shapes/svg?seed=${room.groupName.length}`}
                                                 className={room.groupID === currentGroup ? 'avatar-square' : 'avatar-circle'}

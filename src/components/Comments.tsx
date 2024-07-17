@@ -152,7 +152,7 @@ const Comments = ({ memoId }: CommentsProps) => {
                         <>
                             <div key={c.id} className="w-full flex">
                                 <div className="flex mr-2.5">
-                                    <Link href={`/users/${c.userID}`} passHref>
+                                    <Link href={`/u/${c.userID}`} passHref>
                                         <Avatar src={c.photoURL} size={32} />
                                     </Link>
                                 </div>

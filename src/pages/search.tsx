@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/firebase/firebaseConfig';
 import { collection, query, getDocs, orderBy, doc, getDoc, startAfter, limit } from 'firebase/firestore';
-import Link from 'next/link';
-import { Box, VStack, HStack, Avatar, Heading, Text, Button, Spinner, Input, InputGroup, InputRightElement, Image, Flex, Card, CardHeader, CardBody } from '@chakra-ui/react';
-import Layout from '@/components/Layout';
+import Link from 'next/link'
+import { Box, VStack, HStack, Avatar, Heading, Text, Spinner, InputGroup, InputRightElement, Image, Flex, Card, CardHeader, CardBody } from '@chakra-ui/react';
+import Body from '@/components/Body';
 import Head from 'next/head';
 import Fuse from 'fuse.js';
+import { Button, Input } from "antd"
 
 interface Memo {
     id: string;
@@ -107,25 +108,17 @@ const Search = () => {
     };
 
     return (
-        <div className="container mx-auto my-10">
+        <Body>
             <Head>
                 <title>Search</title>
             </Head>
-            <Layout>
+            <Input
+                type="text"
+                placeholder="メモを検索"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+            />
                 <VStack spacing={5} align="stretch">
-                    <InputGroup size="md" className='mb-5'>
-                        <Input
-                            type="text"
-                            placeholder="Search memos"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                        <InputRightElement width="4.5rem">
-                            <Button h="1.75rem" size="sm" onClick={() => setSearchQuery('')}>
-                                Clear
-                            </Button>
-                        </InputRightElement>
-                    </InputGroup>
                     {displayedMemos.length === 0 && !loading && searchQuery && <Text>No memos found</Text>}
                     {displayedMemos.map((memo) => {
                         const imageUrl = extractImageUrlFromMarkdown(memo.content);
@@ -159,19 +152,10 @@ const Search = () => {
                         );
                     })}
                 </VStack>
-                <div className='w-full flex items-center justify-center'>
-                    {loading ? (
-                        <Button isDisabled={loading} className="mt-5">
-                            <Spinner size="sm" className='mr-2' />Loading...
-                        </Button>
-                    ) : (
-                        <Button onClick={() => fetchMemos(false)} isDisabled={loading || !searchQuery} className="mt-5">
-                            Load more...
-                        </Button>
-                    )}
+                <div className='w-full flex justify-center'>
+                    <Button loading={loading} onClick={() => fetchMemos(false)} type="link">読み込む</Button>
                 </div>
-            </Layout>
-        </div>
+        </Body>
     );
 };
 

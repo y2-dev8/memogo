@@ -5,7 +5,7 @@ import { signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { getDoc, doc } from 'firebase/firestore';
 import { useRouter } from 'next/router';
 import { Button, Avatar, Dropdown, Menu, Divider } from 'antd';
-import { FiList, FiLogOut, FiSearch, FiSettings, FiUser } from 'react-icons/fi';
+import { FiBell, FiBookmark, FiList, FiLogOut, FiSearch, FiSettings, FiUser } from 'react-icons/fi';
 import { HappyProvider } from '@ant-design/happy-work-theme'
 
 export default function Header() {
@@ -53,10 +53,13 @@ export default function Header() {
     const menu = (
         <Menu>
             <Menu.Item key="profile" icon={<FiUser />}>
-                <Link href={`/users/${userID}`}>{displayName}</Link>
+                <Link href={`/u/${userID}`}>{displayName}</Link>
             </Menu.Item>
             <Menu.Item key="list" icon={<FiList />}>
                 <Link href="/memo/list">メモリスト</Link>
+            </Menu.Item>
+            <Menu.Item key="bookmarks" icon={<FiBookmark />}>
+                <Link href="/bookmarks">ブックマーク</Link>
             </Menu.Item>
             <Menu.Item key="settings" icon={<FiSettings />}>
                 <Link href="/settings">設定</Link>
@@ -71,19 +74,18 @@ export default function Header() {
     return (
         <HappyProvider>
             <div className="sticky z-50 bg-white px-5 py-2.5 hidden md:flex items-center">
-                <Link href="/" ><img src="/logo.png" className="w-[100px]" /></Link>
+                <Link href="/"><img src="/ash..png" className="w-20" /></Link>
                 <div className="flex space-x-5 ml-5">
-                    <Link href="/feed">フィード</Link>
                     {user && (
                         <>
-                            <Link href="/bookmarks">ブックマーク</Link>
                             <Link href="/following">フォロー中</Link>
-                            <Link href="/message">メッセージ</Link>
+                            <Link href="/m">メッセージ</Link>
                         </>
                     )}
                 </div>
                 <div className="ml-auto flex items-center space-x-5">
                     <Link href="/search"><FiSearch className="text-gray-500 text-xl" /></Link>
+                    <Link href="/notification"><FiBell className="text-gray-500 text-xl" /></Link>
                     {user ? (
                         <>
                             <Dropdown overlay={menu} trigger={['click']} placement="bottomRight">

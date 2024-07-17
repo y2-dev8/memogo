@@ -65,7 +65,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ groupId, scrollToBottom, st
         <div className="grid grid-cols-5 bg-white shadow-xl rounded-md overflow-hidden">
             {stampNames.map(name => (
                 <div key={name} onClick={() => handleStampSelect(name)} className="cursor-pointer hover:bg-gray-100">
-                    <img src={`https://api.dicebear.com/9.x/croodles/svg?seed=${name}`} className="h-[75px]" />
+                    <img src={`https://api.dicebear.com/9.x/fun-emoji/svg?seed=${name}`} className="h-[75px]" />
                 </div>
             ))}
         </div>

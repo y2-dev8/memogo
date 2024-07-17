@@ -104,11 +104,11 @@ const MobileNav: FC = () => {
             <Stack as="nav" spacing={3}>
               <MobileNavItem icon={FiHash} label="フィード" href="/feed" />
               <MobileNavItem icon={FiSearch} label="検索" href="/search" />
-              {user && userID && <MobileNavItem icon={FiUser} label="プロフィール" href={`/users/${userID}`} />}
+              {user && userID && <MobileNavItem icon={FiUser} label="プロフィール" href={`/u/${userID}`} />}
               {user && <MobileNavItem icon={FiUserPlus} label="フォロー中" href="/following" />}
               {user && <MobileNavItem icon={FiBookmark} label="ブックマーク" href="/bookmarks" />}
               {user && <MobileNavItem icon={FiFeather} label="エディター" href="/editor" />}
-              {user && <MobileNavItem icon={FiMessageCircle} label="メッセージ" href="/message" />}
+              {user && <MobileNavItem icon={FiMessageCircle} label="メッセージ" href="/m" />}
             </Stack>
             <Divider className='my-3' />
             <Stack as="nav" spacing={3}>

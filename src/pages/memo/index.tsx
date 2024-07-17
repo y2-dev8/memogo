@@ -196,7 +196,7 @@ const Memo = () => {
                                 )}
                             </div>
                             {memoData.userId !== currentUserId && authorData && (
-                                <Link href={`/users/${authorData.userID}`} className="flex items-center">
+                                <Link href={`/u/${authorData.userID}`} className="flex items-center">
                                     <Avatar src={authorData.photoURL} size="small" />
                                     <p className="text-sm ml-1.5 text-blue-500">@{authorData.userID}</p>
                                 </Link>
@@ -241,7 +241,7 @@ const Memo = () => {
                 </div>
             </Modal>
             <Modal
-                title="メモの削除"
+                title="メモを削除する"
                 visible={isDeleteModalOpen}
                 onOk={handleDeleteOk}
                 onCancel={handleDeleteCancel}
@@ -249,7 +249,7 @@ const Memo = () => {
                 okText="Delete"
                 centered
             >
-                本当にこのメモを削除してもよろしいですか？ この操作は取り消せません。
+                この操作は取り消せません。
             </Modal>
         </>
     );

@@ -87,10 +87,10 @@ const Following = () => {
                             return (
                                 <div key={user.uid}>
                                     <Flex align="center">
-                                        <Link href={`/users/${user.userID}`} passHref>
+                                        <Link href={`/u/${user.userID}`} passHref>
                                             <Avatar src={avatarSrc} size="md" name={user.displayName} className="mr-5" />
                                         </Link>
-                                        <Link href={`/users/${user.userID}`} className="hover:text-black font-bold text-md" passHref>
+                                        <Link href={`/u/${user.userID}`} className="hover:text-black font-bold text-md" passHref>
                                             {user.displayName}
                                         </Link>
                                     </Flex>
