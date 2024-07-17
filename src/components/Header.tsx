@@ -74,7 +74,7 @@ export default function Header() {
     return (
         <HappyProvider>
             <div className="sticky z-50 bg-white px-5 py-2.5 hidden md:flex items-center">
-                <Link href="/"><img src="/ash..png" className="w-20" /></Link>
+                <Link href="/"><img src="/ash.png" className="w-20" /></Link>
                 <div className="flex space-x-5 ml-5">
                     {user && (
                         <>
