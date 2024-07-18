@@ -51,7 +51,7 @@ const Memo = () => {
                 await deleteDoc(docRef);
                 message.success('メモが削除されました。');
                 setIsDeleteModalOpen(false);
-                router.push('/feed');
+                router.push('/memo/list');
             }
         } catch (error) {
             console.error('メモの削除中にエラーが発生しました:', error);
@@ -151,11 +151,13 @@ const Memo = () => {
                     <Card className="mb-10">
                         <div className="flex items-center justify-between">
                             <p className="text-[32px] font-semibold">{memoData.title}</p>
+                            <div>
                             {memoData.userId === currentUserId && (
                                 <Dropdown overlay={menu} trigger={['click']}>
-                                    <Button icon={<FiMoreVertical />} />
+                                    <Button icon={<FiMoreVertical />} className="ml-1.5" />
                                 </Dropdown>
                             )}
+                            </div>
                         </div>
                         {memoData.userId !== currentUserId && authorData && (
                             <Link href={`/u/${authorData.userID}`} className="flex items-center mt-2.5">
