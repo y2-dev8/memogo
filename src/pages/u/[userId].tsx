@@ -4,8 +4,7 @@ import { auth, db } from '@/firebase/firebaseConfig';
 import { collection, query, where, getDocs, addDoc, deleteDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import Head from 'next/head';
-import { Button, Spin, Image, List, Card } from "antd";
-import { Avatar } from "@chakra-ui/react";
+import { Button, Spin, Image, List, Card, Avatar } from "antd";
 import Body from '@/components/Body';
 
 interface User {
@@ -156,10 +155,10 @@ const UserPage = () => {
                     </div>
                 )}
                 <div className="contents lg:flex items-center space-y-5 lg:space-y-0 lg:space-x-5">
-                    <Avatar src={avatarSrc} name={user?.displayName} size="xl" />
+                    <img src={avatarSrc} className="rounded-md w-20" />
                         <div className="w-full flex items-center">
                             <div>
-                                <p className="text-lg font-bold">{user?.displayName}</p>
+                                <p className="text-xl font-bold">{user?.displayName}</p>
                                 <p className="mt-1.5 text-sm text-gray-500 lg:whitespace-pre-line">{user?.bio}</p>
                                 <p className="text-gray-500 mt-1.5 text-sm"><strong className="font-semibold text-black">{followerCount}</strong> Followers</p>
                             </div>
@@ -167,14 +166,14 @@ const UserPage = () => {
                                 {!isCurrentUser && (
                                     <Button
                                         onClick={isFollowing ? handleUnfollow : handleFollow}
-                                        className="ml-3"
+                                        className="ml-2.5"
                                         type={isFollowing ? 'default' : "primary"}
                                     >
                                         {isFollowing ? 'Unfollow' : 'Follow'}
                                     </Button>
                                 )}
                                 {isCurrentUser && (
-                                    <Button className='ml-3' type="dashed">
+                                    <Button className='ml-2.5' type="dashed">
                                         <Link href="/settings">Edit profile</Link>
                                     </Button>
                                 )}

@@ -131,7 +131,7 @@ const Comments = ({ memoId }: CommentsProps) => {
     return (
         <div className="w-full">
             {currentUser && (
-                <div className="flex space-x-2.5 my-5">
+                <div className="flex space-x-2.5 mb-5">
                     <Input
                         value={comment}
                         onChange={(e) => setComment(e.target.value)}

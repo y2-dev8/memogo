@@ -5,7 +5,7 @@ import { signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { getDoc, doc } from 'firebase/firestore';
 import { useRouter } from 'next/router';
 import { Button, Avatar, Dropdown, Menu, Divider } from 'antd';
-import { FiBell, FiBookmark, FiList, FiLogOut, FiSearch, FiSettings, FiUser } from 'react-icons/fi';
+import { FiBell, FiBookmark, FiList, FiLogOut, FiMessageCircle, FiSearch, FiSettings, FiUser, FiUsers } from 'react-icons/fi';
 import { HappyProvider } from '@ant-design/happy-work-theme'
 
 export default function Header() {
@@ -55,14 +55,21 @@ export default function Header() {
             <Menu.Item key="profile" icon={<FiUser />}>
                 <Link href={`/u/${userID}`}>{displayName}</Link>
             </Menu.Item>
+            <Menu.Item key="settings" icon={<FiSettings />}>
+                <Link href="/settings">設定</Link>
+            </Menu.Item>
+            <Menu.Item key="message" icon={<FiMessageCircle />}>
+                <Link href="/message">メッセージ</Link>
+            </Menu.Item>
+            <Divider className='my-[5px]' />
             <Menu.Item key="list" icon={<FiList />}>
                 <Link href="/memo/list">メモリスト</Link>
             </Menu.Item>
             <Menu.Item key="bookmarks" icon={<FiBookmark />}>
                 <Link href="/bookmarks">ブックマーク</Link>
             </Menu.Item>
-            <Menu.Item key="settings" icon={<FiSettings />}>
-                <Link href="/settings">設定</Link>
+            <Menu.Item key="following" icon={<FiUsers />}>
+                <Link href="/following">フォロー中</Link>
             </Menu.Item>
             <Divider className='my-[5px]' />
             <Menu.Item key="logout" onClick={handleLogout} icon={<FiLogOut />}>
@@ -74,15 +81,7 @@ export default function Header() {
     return (
         <HappyProvider>
             <div className="sticky z-50 bg-white px-5 py-2.5 hidden md:flex items-center">
-                <Link href="/"><img src="/ash.png" className="w-20" /></Link>
-                <div className="flex space-x-5 ml-5">
-                    {user && (
-                        <>
-                            <Link href="/following">フォロー中</Link>
-                            <Link href="/m">メッセージ</Link>
-                        </>
-                    )}
-                </div>
+                <Link href="/"><img src="/lol.png" className="w-[60px]" /></Link>
                 <div className="ml-auto flex items-center space-x-5">
                     <Link href="/search"><FiSearch className="text-gray-500 text-xl" /></Link>
                     <Link href="/notification"><FiBell className="text-gray-500 text-xl" /></Link>

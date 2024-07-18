@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { auth, db } from '@/firebase/firebaseConfig';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import Link from 'next/link';
 import Head from 'next/head';
-import { Button, Spin, List, Card } from "antd";
+import { Spin, List, Card } from "antd";
 import Body from '@/components/Body';
 import { onAuthStateChanged } from 'firebase/auth';
 

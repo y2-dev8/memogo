@@ -16,11 +16,6 @@
     line-height: 1.25;
 }
 
-.markdown-body h1,
-.markdown-body h2 {
-    border-bottom: none;
-}
-
 .markdown-body h1 {
     font-size: 1.75em;
 }

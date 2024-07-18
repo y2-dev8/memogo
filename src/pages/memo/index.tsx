@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { db, auth } from '@/firebase/firebaseConfig';
 import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import LikeButton from '@/components/LikeButton';
@@ -9,8 +9,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Head from 'next/head';
 import { FiMoreVertical, FiTrash, FiType } from "react-icons/fi";
-import { Menu, Dropdown, Button, Modal, Input, message, Spin, Divider, Avatar } from 'antd';
-import Layout from '@/components/Layout';
+import { Menu, Dropdown, Button, Modal, Input, message, Spin, Divider, Avatar, Card } from 'antd';
 import { onAuthStateChanged } from 'firebase/auth';
 import Body from '@/components/Body';
 import Link from 'next/link';
@@ -36,45 +35,9 @@ const Memo = () => {
     const [memoData, setMemoData] = useState<MemoData | null>(null);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [authorData, setAuthorData] = useState<UserData | null>(null);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [editTitle, setEditTitle] = useState('');
-    const [editDescription, setEditDescription] = useState('');
-    const [editContent, setEditContent] = useState('');
     const [loading, setLoading] = useState<boolean>(true);
-    const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-
-    const showEditModal = () => {
-        if (memoData) {
-            setEditTitle(memoData.title);
-            setEditDescription(memoData.description);
-            setEditContent(memoData.content);
-            setIsEditModalOpen(true);
-        }
-    };
-
-    const handleEditOk = async () => {
-        try {
-            if (typeof id === 'string' && memoData) {
-                setIsSaving(true);
-                const docRef = doc(db, 'memos', id);
-                await updateDoc(docRef, { title: editTitle, description: editDescription, content: editContent });
-                setMemoData({ ...memoData, title: editTitle, description: editDescription, content: editContent });
-                message.success('メモが更新されました。');
-                setIsEditModalOpen(false);
-            }
-        } catch (error) {
-            console.error('メモの更新中にエラーが発生しました:', error);
-            message.error('メモの更新中にエラーが発生しました。');
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const handleEditCancel = () => {
-        setIsEditModalOpen(false);
-    };
 
     const showDeleteModal = () => {
         setIsDeleteModalOpen(true);
@@ -163,8 +126,10 @@ const Memo = () => {
 
     const menu = (
         <Menu>
-            <Menu.Item onClick={showEditModal} icon={<FiType />}>
-                編集
+            <Menu.Item icon={<FiType />}>
+                <Link href={`/editor?id=${id}`}>
+                    編集
+                </Link>
             </Menu.Item>
             <Menu.Item onClick={showDeleteModal} icon={<FiTrash />} danger>
                 削除
@@ -183,63 +148,45 @@ const Memo = () => {
             )}
             <Body>
                 {memoData && (
-                    <>
-                        <div className="flex flex-col space-y-1.5">
-                            <div className="flex items-center">
-                                <p className="text-[32px] font-semibold">{memoData.title}</p>
-                                {memoData.userId === currentUserId && (
-                                    <div className='ml-auto'>
-                                        <Dropdown overlay={menu} trigger={['click']}>
-                                            <Button icon={<FiMoreVertical />} />
-                                        </Dropdown>
-                                    </div>
-                                )}
-                            </div>
-                            {memoData.userId !== currentUserId && authorData && (
-                                <Link href={`/u/${authorData.userID}`} className="flex items-center">
-                                    <Avatar src={authorData.photoURL} size="small" />
-                                    <p className="text-sm ml-1.5 text-blue-500">@{authorData.userID}</p>
-                                </Link>
+                    <Card className="mb-10">
+                        <div className="flex items-center justify-between">
+                            <p className="text-[32px] font-semibold">{memoData.title}</p>
+                            {memoData.userId === currentUserId && (
+                                <Dropdown overlay={menu} trigger={['click']}>
+                                    <Button icon={<FiMoreVertical />} />
+                                </Dropdown>
                             )}
-                            <p className="text-md">{memoData.description}</p>
                         </div>
-
-                    </>
+                        {memoData.userId !== currentUserId && authorData && (
+                            <Link href={`/u/${authorData.userID}`} className="flex items-center mt-2.5">
+                                <Avatar src={authorData.photoURL} size="small" />
+                                <p className="text-sm ml-1.5 text-blue-500">@{authorData.userID}</p>
+                            </Link>
+                        )}
+                        <p className="text-md mt-1.5 mb-[32px]">{memoData.description}</p>
+                        <div className="markdown-body">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {memoData.content}
+                            </ReactMarkdown>
+                        </div>
+                        <div className="flex items-center mt-[32px]">
+                            <LikeButton memoId={id as string} />
+                            <BookmarkButton memoId={id as string} />
+                        </div>
+                    </Card>
                 )}
-                    <Divider />
-                    <div className="markdown-body">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {memoData ? memoData.content : ''}
-                        </ReactMarkdown>
-                    </div>
-                <Divider />
-                <>
+                <Card title="コメント">
+                    {/* <div className="mb-5 flex flex-col md:flex-row text-center items-center justify-center opacity-50">
+                        <img src="https://opendoodles.s3-us-west-1.amazonaws.com/jumping.svg" className="w-64" />
+                        <p className="text-xl font-bold">記事に関するコメントをしましょう</p>
+                    </div> */}
                     {typeof id === 'string' && (
                         <>
-                            <div className="flex items-center">
-                                <LikeButton memoId={id} />
-                                <BookmarkButton memoId={id} />
-                            </div>
                             <Comments memoId={id} />
                         </>
                     )}
-                </>
+                </Card>
             </Body>
-            <Modal
-                title="メモの編集"
-                visible={isEditModalOpen}
-                onOk={handleEditOk}
-                onCancel={handleEditCancel}
-                okButtonProps={{ loading: isSaving }}
-                okText="Save"
-                centered
-            >
-                <div className="space-y-2.5">
-                    <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="タイトル"/>
-                    <Input value={editDescription} onChange={(e) => setEditDescription(e.target.value)} placeholder="説明"/>
-                    <TextArea value={editContent} onChange={(e) => setEditContent(e.target.value)} placeholder="内容" rows={10}/>
-                </div>
-            </Modal>
             <Modal
                 title="メモを削除する"
                 visible={isDeleteModalOpen}
