@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/firebase/firebaseConfig';
-import { collection, query, getDocs, orderBy, doc, getDoc, startAfter, limit } from 'firebase/firestore';
-import Link from 'next/link'
-import { Box, VStack, HStack, Avatar, Heading, Text, Spinner, InputGroup, InputRightElement, Image, Flex, Card, CardHeader, CardBody } from '@chakra-ui/react';
+import { collection, query, getDocs, orderBy, doc, getDoc, limit } from 'firebase/firestore';
+import Link from 'next/link';
 import Body from '@/components/Body';
 import Head from 'next/head';
 import Fuse from 'fuse.js';
-import { Button, Input } from "antd"
+import { Input, Tabs, Avatar, Empty, Card } from "antd";
+import type { TabsProps } from 'antd';
+import { formatDistanceToNow } from 'date-fns';
+import { ja } from 'date-fns/locale';
+
+const { TabPane } = Tabs;
 
 interface Memo {
     id: string;
@@ -20,6 +24,12 @@ interface Memo {
     userID: string; // ユーザーIDを追加
 }
 
+interface User {
+    userID: string;
+    displayName: string;
+    photoURL: string;
+}
+
 const extractImageUrlFromMarkdown = (markdown: string) => {
     const regex = /!\[.*?\]\((.*?)\)/;
     const match = regex.exec(markdown);
@@ -28,133 +38,167 @@ const extractImageUrlFromMarkdown = (markdown: string) => {
 
 const Search = () => {
     const [memos, setMemos] = useState<Memo[]>([]);
-    const [lastVisible, setLastVisible] = useState<any>(null);
+    const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
-    const [loadedMemoIds, setLoadedMemoIds] = useState<Set<string>>(new Set());
     const [searchQuery, setSearchQuery] = useState<string>('');
-    const [fuse, setFuse] = useState<Fuse<Memo> | null>(null);
+    const [fuseMemos, setFuseMemos] = useState<Fuse<Memo> | null>(null);
+    const [fuseUsers, setFuseUsers] = useState<Fuse<User> | null>(null);
     const [displayedMemos, setDisplayedMemos] = useState<Memo[]>([]);
+    const [displayedUsers, setDisplayedUsers] = useState<User[]>([]);
 
-    const fetchMemos = async (initial = false) => {
+    const fetchMemos = async () => {
         setLoading(true);
-        let q = query(collection(db, 'memos'), orderBy('createdAt', 'desc'), limit(10));
-        if (lastVisible && !initial) {
-            q = query(collection(db, 'memos'), orderBy('createdAt', 'desc'), startAfter(lastVisible), limit(10));
-        }
+        const q = query(collection(db, 'memos'), orderBy('createdAt', 'desc'), limit(10));
         const querySnapshot = await getDocs(q);
         const memosData: Memo[] = [];
-        const newLoadedMemoIds = new Set(loadedMemoIds);
 
         for (const memoDoc of querySnapshot.docs) {
             const memoId = memoDoc.id;
-            if (!newLoadedMemoIds.has(memoId)) {
-                newLoadedMemoIds.add(memoId);
-                const memoData = memoDoc.data();
-                if (memoData && memoData.userId) {
-                    const userDocRef = doc(db, 'users', memoData.userId);
-                    const userDoc = await getDoc(userDocRef);
-                    if (userDoc.exists()) {
-                        const userData = userDoc.data();
-                        memosData.push({
-                            id: memoId,
-                            ...memoData,
-                            photoURL: userData.photoURL || '/default-avatar.png',
-                            displayName: userData.displayName || 'Anonymous',
-                            userID: userData.userID // ユーザーIDを取得
-                        } as Memo);
-                    }
+            const memoData = memoDoc.data();
+            if (memoData && memoData.userId) {
+                const userDocRef = doc(db, 'users', memoData.userId);
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    memosData.push({
+                        id: memoId,
+                        ...memoData,
+                        photoURL: userData.photoURL || '/default-avatar.png',
+                        displayName: userData.displayName || 'Anonymous',
+                        userID: userData.userID // ユーザーIDを取得
+                    } as Memo);
                 }
             }
         }
 
-        if (initial) {
-            setMemos(memosData);
-            setFuse(new Fuse(memosData, {
-                keys: ['title', 'description'],
-                includeScore: true,
-                threshold: 0.3,
-            }));
-        } else {
-            setMemos((prevMemos) => {
-                const newMemos = [...prevMemos, ...memosData];
-                setFuse(new Fuse(newMemos, {
-                    keys: ['title', 'description'],
-                    includeScore: true,
-                    threshold: 0.3,
-                }));
-                return newMemos;
+        setMemos(memosData);
+        setFuseMemos(new Fuse(memosData, {
+            keys: ['title', 'description'],
+            includeScore: true,
+            threshold: 0.3,
+        }));
+        setLoading(false);
+    };
+
+    const fetchUsers = async () => {
+        setLoading(true);
+        const q = query(collection(db, 'users'), orderBy('userID'));
+        const querySnapshot = await getDocs(q);
+        const usersData: User[] = [];
+
+        querySnapshot.forEach((userDoc) => {
+            const userData = userDoc.data() as User;
+            usersData.push({
+                userID: userData.userID,
+                displayName: userData.displayName || 'Anonymous',
+                photoURL: userData.photoURL || '/default-avatar.png',
             });
-        }
-        setLoadedMemoIds(newLoadedMemoIds);
-        setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
+        });
+
+        setUsers(usersData);
+        setFuseUsers(new Fuse(usersData, {
+            keys: ['userID', 'displayName'],
+            includeScore: true,
+            threshold: 0.3,
+        }));
         setLoading(false);
     };
 
     useEffect(() => {
-        fetchMemos(true);
+        fetchMemos();
+        fetchUsers();
     }, []);
 
     useEffect(() => {
         if (searchQuery.trim() === '') {
             setDisplayedMemos([]);
-        } else if (fuse) {
-            const results = fuse.search(searchQuery);
-            setDisplayedMemos(results.map(result => result.item));
+            setDisplayedUsers([]);
+        } else {
+            if (fuseMemos) {
+                const memoResults = fuseMemos.search(searchQuery);
+                setDisplayedMemos(memoResults.map(result => result.item));
+            }
+            if (fuseUsers) {
+                const userResults = fuseUsers.search(searchQuery);
+                setDisplayedUsers(userResults.map(result => result.item));
+            }
         }
-    }, [searchQuery, fuse]);
+    }, [searchQuery, fuseMemos, fuseUsers]);
 
     const truncateDescription = (description: string) => {
         return description.length > 100 ? description.substring(0, 100) + '...' : description;
     };
+
+    const formatDate = (date: any) => {
+        return formatDistanceToNow(date.toDate(), { addSuffix: true, locale: ja });
+    };
+
+    const tabItems: TabsProps['items'] = [
+        {
+            key: 'articles',
+            label: '記事',
+            children: (
+                <>
+                    {searchQuery && (
+                        <>
+                            {displayedMemos.length === 0 && !loading && searchQuery && <Empty description="記事が見つかりませんでした。" />}
+                            {displayedMemos.map((memo) => {
+                                const imageUrl = extractImageUrlFromMarkdown(memo.content);
+                                return (
+                                    <Link href={`/article?id=${memo.id}`} key={memo.id}>
+                                        <Card title={memo.title}>
+                                            <div className="flex items-center">
+                                                <Link href={`/u/${memo.userID}`} className="flex items-center mr-2.5">
+                                                    <Avatar src={memo.photoURL} size="default" />
+                                                    <p className="text-blue-500 ml-1.5">@{memo.userID}</p>
+                                                </Link>
+                                                <p className="text-gray-500 text-xs">{formatDate(memo.createdAt)}</p>
+                                            </div>
+                                        </Card>
+                                    </Link>
+                                );
+                            })}
+                        </>
+                    )}
+                </>
+            ),
+        },
+        {
+            key: 'users',
+            label: 'ユーザー',
+            children: (
+                <div className="space-y-5">
+                    {searchQuery && (
+                        <>
+                            {displayedUsers.length === 0 && !loading && searchQuery && <Empty description="ユーザーが見つかりませんでした。" />}
+                            {displayedUsers.map((user) => (
+                                <div className="flex items-center space-x-2.5">
+                                    <Link href={`/u/${user.userID}`}>
+                                        <Avatar src={user.photoURL} size="large" />
+                                    </Link>
+                                    <div>
+                                        <Link href={`/u/${user.userID}`} passHref>
+                                            <p className="text-md font-bold text-black hover:text-black">{user.displayName}</p>
+                                        </Link>
+                                        <p className="text-gray-500 text-sm">@{user.userID}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </>
+                    )}
+                </div>
+            ),
+        }
+    ];
 
     return (
         <Body>
             <Head>
                 <title>Search</title>
             </Head>
-            <Input
-                type="text"
-                placeholder="メモを検索"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-            />
-                <VStack spacing={5} align="stretch">
-                    {displayedMemos.length === 0 && !loading && searchQuery && <Text>No memos found</Text>}
-                    {displayedMemos.map((memo) => {
-                        const imageUrl = extractImageUrlFromMarkdown(memo.content);
-                        return (
-                            <Box key={memo.id} borderWidth='1px' borderRadius='lg' overflow='hidden' className="shadow-sm w-full">
-                                <Card>
-                                    <CardHeader>
-                                        <Flex>
-                                            <Flex flex='1' gap='4' alignItems='center' flexWrap='wrap'>
-                                                <Link href={`/${memo.userID}`} passHref>
-                                                    <Avatar name={memo.displayName} src={memo.photoURL} />
-                                                </Link>
-                                                <Box>
-                                                    <Link href={`/${memo.userID}`} passHref>
-                                                        <Heading size='sm'>{memo.displayName}</Heading>
-                                                    </Link>
-                                                    <Text className="text-gray-500 text-sm mt-1">{memo.createdAt?.toDate().toLocaleString()}</Text>
-                                                </Box>
-                                            </Flex>
-                                        </Flex>
-                                    </CardHeader>
-                                    <CardBody className="mb-5">
-                                        <Link href={`/memo?id=${memo.id}`} passHref>
-                                            <Heading size='md' className='mb-3'>{memo.title}</Heading>
-                                        </Link>
-                                        <Text>{truncateDescription(memo.description)}</Text>
-                                        {imageUrl && <Image objectFit='cover' src={imageUrl} alt='Memo image' className='mt-5' />}
-                                    </CardBody>
-                                </Card>
-                            </Box>
-                        );
-                    })}
-                </VStack>
-                <div className='w-full flex justify-center'>
-                    <Button loading={loading} onClick={() => fetchMemos(false)} type="link">読み込む</Button>
-                </div>
+            <p className="text-[32px] font-bold mb-2.5">検索</p>
+            <Input type="text" placeholder="キーワードを入力" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="mb-2.5"/>
+            <Tabs defaultActiveKey="articles" items={tabItems} />
         </Body>
     );
 };

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { db } from '@/firebase/firebaseConfig';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import Link from 'next/link';
-import Layout from '@/components/Layout';
+import Body from '@/components/Body';
 import Head from 'next/head';
 import { Typography, Spin, List, Card, Empty } from 'antd';
 import useAuthRedirect from '@/hooks/useAuthRedirect';
@@ -56,11 +56,10 @@ const BookmarkedMemos = () => {
     }
 
     return (
-        <div className="container mx-auto my-10">
+        <Body>
             <Head>
                 <title>Bookmarks</title>
             </Head>
-            <Layout>
                 {memos.length === 0 ? (
                     <div className="flex flex-col justify-center text-center">
                         <img src="https://opendoodles.s3-us-west-1.amazonaws.com/reading.svg" className="h-60 opacity-50 mb-5" />
@@ -72,7 +71,7 @@ const BookmarkedMemos = () => {
                         dataSource={memos}
                         renderItem={memo => (
                             <List.Item>
-                                <Link href={`/memo?id=${memo.uid}`}>
+                                <Link href={`/article?id=${memo.uid}`}>
                                     <Card title={memo.title}>
                                         <Card.Meta
                                             description={memo.description.length > 100 ? `${memo.description.substring(0, 100)}...` : memo.description}
@@ -83,8 +82,7 @@ const BookmarkedMemos = () => {
                         )}
                     />
                 )}
-            </Layout>
-        </div>
+        </Body>
     );
 };
 

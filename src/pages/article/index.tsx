@@ -9,12 +9,10 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Head from 'next/head';
 import { FiMoreVertical, FiTrash, FiType } from "react-icons/fi";
-import { Menu, Dropdown, Button, Modal, Input, message, Spin, Divider, Avatar, Card } from 'antd';
+import { Menu, Dropdown, Button, Modal, Input, message, Spin, Avatar, Card, Alert } from 'antd';
 import { onAuthStateChanged } from 'firebase/auth';
 import Body from '@/components/Body';
 import Link from 'next/link';
-
-const { TextArea } = Input;
 
 interface MemoData {
     title: string;
@@ -51,7 +49,7 @@ const Memo = () => {
                 await deleteDoc(docRef);
                 message.success('メモが削除されました。');
                 setIsDeleteModalOpen(false);
-                router.push('/memo/list');
+                router.push('/dashboard');
             }
         } catch (error) {
             console.error('メモの削除中にエラーが発生しました:', error);

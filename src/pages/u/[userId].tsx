@@ -6,6 +6,8 @@ import Link from 'next/link';
 import Head from 'next/head';
 import { Button, Spin, Image, List, Card, Avatar } from "antd";
 import Body from '@/components/Body';
+import { formatDistanceToNow } from 'date-fns';
+import { ja } from 'date-fns/locale';
 
 interface User {
     photoURL: string;
@@ -21,6 +23,7 @@ interface Memo {
     title: string;
     description: string;
     visibility: string;
+    createdAt: any;
 }
 
 const UserPage = () => {
@@ -58,7 +61,7 @@ const UserPage = () => {
         const fetchMemos = async (uid: string) => {
             try {
                 const memosQuery = query(
-                    collection(db, 'memos'), 
+                    collection(db, 'memos'),
                     where('userId', '==', uid),
                     where('visibility', '==', 'public') // 公開されているメモのみを取得
                 );
@@ -142,6 +145,10 @@ const UserPage = () => {
         }
     };
 
+    const formatDate = (date: any) => {
+        return formatDistanceToNow(date.toDate(), { addSuffix: true, locale: ja });
+    };
+
     if (loading) return <div className="w-full min-h-screen flex justify-center items-center h-screen"><Spin size="large" /></div>;
 
     const avatarSrc = user?.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${user?.displayName.length}`;
@@ -155,7 +162,7 @@ const UserPage = () => {
                     </div>
                 )}
                 <div className="contents lg:flex items-center space-y-5 lg:space-y-0 lg:space-x-5">
-                    <img src={avatarSrc} className="rounded-md w-20" />
+                    <img src={avatarSrc} className="user-circle w-20" />
                         <div className="w-full flex items-center">
                             <div>
                                 <p className="text-xl font-bold">{user?.displayName}</p>
@@ -191,11 +198,15 @@ const UserPage = () => {
                             dataSource={memos}
                             renderItem={memo => (
                                 <List.Item>
-                                    <Link href={`/memo?id=${memo.uid}`}>
+                                    <Link href={`/article?id=${memo.uid}`}>
                                         <Card title={memo.title}>
-                                            <Card.Meta
-                                                description={memo.description.length > 100 ? `${memo.description.substring(0, 100)}...` : memo.description}
-                                            />
+                                            <div className="flex items-center">
+                                                <Link href={`/u/${userId}`} className="flex items-center mr-2.5">
+                                                    <Avatar src={avatarSrc} size="default" />
+                                                    <p className="text-blue-500 ml-1.5">@{userId}</p>
+                                                </Link>
+                                                <p className="text-gray-500 text-xs">{formatDate(memo.createdAt)}</p>
+                                            </div>
                                         </Card>
                                     </Link>
                                 </List.Item>

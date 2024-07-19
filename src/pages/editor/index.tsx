@@ -1,7 +1,6 @@
 import React, { useState, ChangeEvent, useEffect, useRef } from 'react';
 import { db, auth, storage } from '@/firebase/firebaseConfig';
 import { collection, addDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { FirebaseError } from 'firebase/app';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { v4 as uuidv4 } from 'uuid';
@@ -69,6 +68,10 @@ const Editor = () => {
                     const docSnap = await getDoc(docRef);
                     if (docSnap.exists()) {
                         const data = docSnap.data() as MemoData;
+                        if (data.userId !== currentUserId) {
+                            router.push('/403');
+                            return;
+                        }
                         setMemoData(data);
                     } else {
                         console.log('No such document!');
@@ -99,8 +102,10 @@ const Editor = () => {
                 setLoading(false);
             }
         };
-        fetchMemo();
-    }, [id]);
+        if (currentUserId) {
+            fetchMemo();
+        }
+    }, [id, currentUserId]);
 
     const handleContentChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
         if (memoData) setMemoData({ ...memoData, content: e.target.value });
@@ -168,7 +173,7 @@ const Editor = () => {
                 });
                 message.success('メモが保存されました。');
             }
-            router.push(`/memo/list`);
+            router.push(`/dashboard`);
         } catch (error) {
             console.error('メモの保存中にエラーが発生しました:', error);
             message.error('メモの保存中にエラーが発生しました。');

@@ -59,11 +59,11 @@ export default function Header() {
                 <Link href="/settings">設定</Link>
             </Menu.Item>
             <Menu.Item key="message" icon={<FiMessageCircle />}>
-                <Link href="/message">メッセージ</Link>
+                <Link href="/m">メッセージ</Link>
             </Menu.Item>
             <Divider className='my-[5px]' />
             <Menu.Item key="list" icon={<FiList />}>
-                <Link href="/memo/list">メモリスト</Link>
+                <Link href="/dashboard">記事の管理</Link>
             </Menu.Item>
             <Menu.Item key="bookmarks" icon={<FiBookmark />}>
                 <Link href="/bookmarks">ブックマーク</Link>
@@ -80,8 +80,8 @@ export default function Header() {
 
     return (
         <HappyProvider>
-            <div className="sticky z-50 bg-white px-5 py-2.5 hidden md:flex items-center">
-                <Link href="/"><img src="/lol.png" className="w-[60px]" /></Link>
+            <div className="sticky z-50 bg-white px-5 py-2.5 flex items-center">
+                <Link href="/"><img src="/lol.png" className="w-[50px]" /></Link>
                 <div className="ml-auto flex items-center space-x-5">
                     <Link href="/search"><FiSearch className="text-gray-500 text-xl" /></Link>
                     <Link href="/notification"><FiBell className="text-gray-500 text-xl" /></Link>
@@ -92,8 +92,8 @@ export default function Header() {
                                     <Avatar src={photoURL} size="large" />
                                 </div>
                             </Dropdown>
-                            <Button type="primary">
-                                <Link href="/editor">新規作成</Link>
+                            <Button type="primary" className="hidden md:block">
+                                <Link href="/editor">記事を作成</Link>
                             </Button>
                         </>
                     ) : (

@@ -8,7 +8,7 @@ interface BodyProps {
 const Body = ({ children }: BodyProps) => {
     return (
         <HappyProvider>
-            <div className="container mx-auto my-10 md:my-0">
+            <div className="container mx-auto my-0">
                 <div className="mx-auto max-w-[90%] md:max-w-[60%]">
                     {children}
                 </div>
