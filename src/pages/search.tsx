@@ -10,8 +10,6 @@ import type { TabsProps } from 'antd';
 import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
 
-const { TabPane } = Tabs;
-
 interface Memo {
     id: string;
     userId: string;
@@ -146,7 +144,7 @@ const Search = () => {
                                 const imageUrl = extractImageUrlFromMarkdown(memo.content);
                                 return (
                                     <Link href={`/article?id=${memo.id}`} key={memo.id}>
-                                        <Card title={memo.title}>
+                                        <Card title={memo.title} key={memo.id}>
                                             <div className="flex items-center">
                                                 <Link href={`/u/${memo.userID}`} className="flex items-center mr-2.5">
                                                     <Avatar src={memo.photoURL} size="default" />
@@ -172,7 +170,7 @@ const Search = () => {
                         <>
                             {displayedUsers.length === 0 && !loading && searchQuery && <Empty description="ユーザーが見つかりませんでした。" />}
                             {displayedUsers.map((user) => (
-                                <div className="flex items-center space-x-2.5">
+                                <div key={user.userID} className="flex items-center space-x-2.5">
                                     <Link href={`/u/${user.userID}`}>
                                         <Avatar src={user.photoURL} size="large" />
                                     </Link>
