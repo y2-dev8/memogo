@@ -163,9 +163,11 @@ const Search = () => {
                             {displayedMemos.map((memo, index) => {
                                 return (
                                     <div className="flex" key={index}>
-                                        <Link href={`/article?id=${memo.id}`} className="select-none mr-2.5 bg-blue-100 w-20 h-20 rounded-xl flex items-center justify-center text-[32px]">
-                                            {getEmojiForTitle(memo.title)}
-                                        </Link>
+                                        <div>
+                                            <Link href={`/article?id=${memo.id}`} className="select-none mr-2.5 bg-blue-100 w-20 h-20 rounded-xl flex items-center justify-center text-[32px]">
+                                                {getEmojiForTitle(memo.title)}
+                                            </Link>
+                                        </div>
                                         <div>
                                             <Link href={`/article?id=${memo.id}`}>
                                                 <p className="text-lg font-semibold text-black hover:text-black">{memo.title}</p>

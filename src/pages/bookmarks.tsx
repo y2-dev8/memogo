@@ -119,9 +119,11 @@ const BookmarkedMemos = () => {
                 <div className="space-y-5">
                     {memos.map((memo, index) => (
                         <div className="flex" key={index}>
+                            <div>
                             <Link href={`/article?id=${memo.uid}`} className="select-none mr-2.5 bg-blue-100 w-20 h-20 rounded-xl flex items-center justify-center text-[32px]">
                                 {getEmojiForTitle(memo.title)}
                             </Link>
+                            </div>
                             <div>
                                 <Link href={`/article?id=${memo.uid}`}>
                                     <p className="text-lg font-semibold text-black hover:text-black">{memo.title}</p>
