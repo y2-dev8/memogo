@@ -7,6 +7,7 @@ import { Spin, List, Card, Button, Input, Empty } from "antd";
 import Body from '@/components/Body';
 import { onAuthStateChanged } from 'firebase/auth';
 import { FiPlus } from 'react-icons/fi';
+import useAuthRedirect from '@/hooks/useAuthRedirect';
 
 interface Memo {
     content: string;
@@ -18,6 +19,7 @@ interface Memo {
 }
 
 const MyMemosPage = () => {
+    useAuthRedirect();
     const [memos, setMemos] = useState<Memo[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [currentUser, setCurrentUser] = useState<any>(null);
@@ -78,7 +80,7 @@ const MyMemosPage = () => {
                         <p className="text-[32px] font-bold border-b">記事の管理</p>
                         <div className="flex flex-col items-center justify-center text-center">
                             <img src="/m/open-book.png" className="w-64" />
-                            <p className="text-xl opacity-50 font-semibold">最初の記事を作成しましょう</p>
+                            <p className="text-xl opacity-50 font-bold">最初の記事を作成しましょう</p>
                             <Button type="primary" className="mt-5">
                                 <Link href="/editor">
                                     新しく作成

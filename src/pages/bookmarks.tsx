@@ -4,17 +4,46 @@ import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firesto
 import Link from 'next/link';
 import Body from '@/components/Body';
 import Head from 'next/head';
-import { Typography, Spin, List, Card, Empty } from 'antd';
+import { Spin, Avatar, Button } from 'antd';
 import useAuthRedirect from '@/hooks/useAuthRedirect';
 import useAuthState from '@/hooks/useAuthState';
-
-const { Title, Text } = Typography;
+import { formatDistanceToNow } from 'date-fns';
+import { ja } from 'date-fns/locale';
+import { FiEye } from 'react-icons/fi';
 
 interface Memo {
     title: string;
     description: string;
     uid: string;
+    userId: string;
+    createdAt: any;
+    photoURL: string;
+    displayName: string;
 }
+
+const getEmojiForTitle = (title: string) => {
+    const length = title.length;
+    if (length <= 5) return '😃';
+    if (length <= 10) return '😄';
+    if (length <= 15) return '😁';
+    if (length <= 20) return '😊';
+    if (length <= 25) return '😇';
+    if (length <= 30) return '😉';
+    if (length <= 35) return '😍';
+    if (length <= 40) return '😘';
+    if (length <= 45) return '😗';
+    if (length <= 50) return '🤗';
+    if (length <= 55) return '🤔';
+    if (length <= 60) return '😐';
+    if (length <= 65) return '😑';
+    if (length <= 70) return '😶';
+    if (length <= 75) return '😏';
+    if (length <= 80) return '😒';
+    if (length <= 85) return '😞';
+    if (length <= 90) return '😔';
+    if (length <= 95) return '😕';
+    return '😢';
+};
 
 const BookmarkedMemos = () => {
     useAuthRedirect();
@@ -34,6 +63,16 @@ const BookmarkedMemos = () => {
             if (memoDoc.exists()) {
                 const memoData = memoDoc.data() as Memo;
                 memoData.uid = memoId;
+
+                if (memoData.userId) {
+                    const userDocRef = doc(db, 'users', memoData.userId);
+                    const userDoc = await getDoc(userDocRef);
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        memoData.photoURL = userData.photoURL || '/default-avatar.png';
+                        memoData.displayName = userData.displayName || 'Anonymous';
+                    }
+                }
                 bookmarkedMemos.push(memoData);
             }
         }
@@ -49,6 +88,10 @@ const BookmarkedMemos = () => {
         }
     }, [user]);
 
+    const formatDate = (date: any) => {
+        return formatDistanceToNow(date.toDate(), { addSuffix: true, locale: ja });
+    };
+
     if (loading || loadingMemos) return <div className="w-full min-h-screen flex justify-center items-center"><Spin size="large" /></div>;
 
     if (error) {
@@ -60,28 +103,42 @@ const BookmarkedMemos = () => {
             <Head>
                 <title>Bookmarks</title>
             </Head>
-                {memos.length === 0 ? (
-                    <div className="flex flex-col justify-center text-center">
-                        <img src="https://opendoodles.s3-us-west-1.amazonaws.com/reading.svg" className="h-60 opacity-50 mb-5" />
-                        <p className="text-lg opacity-50 font-semibold">メモをブックマークしましょう</p>
-                    </div>
-                ) : (
-                    <List
-                        grid={{ gutter: 16, column: 1 }}
-                        dataSource={memos}
-                        renderItem={memo => (
-                            <List.Item>
+            {memos.length === 0 ? (
+                <div className="flex flex-col items-center justify-center text-center">
+                    <img src="/m/books2.png" className="w-64" />
+                    <p className="text-xl opacity-50 font-bold">記事をブックマークしましょう</p>
+                    <Button type="dashed" className="mt-5">
+                        <Link href="/search">
+                            記事を検索
+                        </Link>
+                    </Button>
+                </div>
+            ) : (
+                <>
+                <p className="text-[32px] font-bold mb-5">ブックマーク</p>
+                <div className="space-y-5">
+                    {memos.map((memo, index) => (
+                        <div className="flex" key={index}>
+                            <Link href={`/article?id=${memo.uid}`} className="select-none mr-2.5 bg-blue-100 w-20 h-20 rounded-xl flex items-center justify-center text-[32px]">
+                                {getEmojiForTitle(memo.title)}
+                            </Link>
+                            <div>
                                 <Link href={`/article?id=${memo.uid}`}>
-                                    <Card title={memo.title}>
-                                        <Card.Meta
-                                            description={memo.description.length > 100 ? `${memo.description.substring(0, 100)}...` : memo.description}
-                                        />
-                                    </Card>
+                                    <p className="text-lg font-semibold text-black hover:text-black">{memo.title}</p>
                                 </Link>
-                            </List.Item>
-                        )}
-                    />
-                )}
+                                <div className="flex mt-1.5 space-x-[10px] items-center">
+                                    <Link href={`/u/${memo.userId}`} className="flex items-center">
+                                        <Avatar src={memo.photoURL} size="default" />
+                                        <p className="text-xs ml-[5px] text-black hover:text-black">{memo.displayName}</p>
+                                    </Link>
+                                    <p className="text-xs">{formatDate(memo.createdAt)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                </>
+            )}
         </Body>
     );
 };

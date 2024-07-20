@@ -19,7 +19,7 @@ interface Memo {
     createdAt: any;
     photoURL: string;
     displayName: string;
-    userID: string; // ユーザーIDを追加
+    userID: string;
 }
 
 interface User {
@@ -147,10 +147,6 @@ const Search = () => {
         }
     }, [searchQuery, fuseMemos, fuseUsers]);
 
-    const truncateDescription = (description: string) => {
-        return description.length > 100 ? description.substring(0, 100) + '...' : description;
-    };
-
     const formatDate = (date: any) => {
         return formatDistanceToNow(date.toDate(), { addSuffix: true, locale: ja });
     };
@@ -224,8 +220,15 @@ const Search = () => {
                 <title>Search</title>
             </Head>
             <p className="text-[32px] font-bold mb-2.5">検索</p>
-            <Input type="text" placeholder="キーワードを入力" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="mb-2.5"/>
-            <Tabs defaultActiveKey="articles" items={tabItems} />
+            <Input type="text" placeholder="キーワードを入力" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+            {searchQuery.trim() === '' ? (
+                <div className="flex flex-col items-center justify-center">
+                    <img src="/m/books.png" className="w-64" />
+                    <p className="text-xl opacity-50 font-bold">気になる記事やユーザーを検索しましょう</p>
+                </div>
+            ) : (
+                <Tabs defaultActiveKey="articles" items={tabItems} className="mt-2.5" />
+            )}
         </Body>
     );
 };

@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { db } from '@/firebase/firebaseConfig';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import Link from 'next/link';
-import { Spin, message, Divider, Empty } from 'antd';
+import { Spin, message, Divider, Empty, Button, Avatar } from 'antd';
 import Head from 'next/head';
-import Layout from '@/components/Layout';
+import Body from '@/components/Body';
 import useAuthRedirect from '@/hooks/useAuthRedirect';
 import useAuthState from '@/hooks/useAuthState';
-import { Avatar, Flex } from "@chakra-ui/react";
+import { Flex } from "@chakra-ui/react";
 
 interface User {
     uid: string;
@@ -75,38 +75,43 @@ const Following = () => {
     }
 
     return (
-        <div className="container mx-auto my-10">
+        <Body>
             <Head>
                 <title>Following</title>
             </Head>
-            <Layout>
                 {following.length > 0 ? (
-                    <div className="space-y-3">
-                        {following.map((user, index) => {
-                            const avatarSrc = user.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${user.displayName.length}`;
-                            return (
-                                <div key={user.uid}>
-                                    <Flex align="center">
-                                        <Link href={`/u/${user.userID}`} passHref>
-                                            <Avatar src={avatarSrc} size="md" name={user.displayName} className="mr-5" />
+                    <div>
+                        <p className="text-[32px] font-bold mb-5">フォロー中</p>
+                        <div className="space-y-5">
+                            {following.map((user) => {
+                                return (
+                                    <div key={user.uid} className="flex items-center space-x-2.5">
+                                        <Link href={`/u/${user.userID}`}>
+                                            <Avatar src={user.photoURL} size="large" />
                                         </Link>
-                                        <Link href={`/u/${user.userID}`} className="hover:text-black font-bold text-md" passHref>
-                                            {user.displayName}
-                                        </Link>
-                                    </Flex>
-                                    {index < following.length - 1 && <Divider />}
-                                </div>
-                            );
-                        })}
+                                        <div>
+                                            <Link href={`/u/${user.userID}`} passHref>
+                                                <p className="text-md font-bold text-black hover:text-black">{user.displayName}</p>
+                                            </Link>
+                                            <p className="text-gray-500 text-sm">@{user.userID}</p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 ) : (
-                    <div className="flex flex-col justify-center text-center">
-                        <img src="https://opendoodles.s3-us-west-1.amazonaws.com/selfie.svg" className="h-60 opacity-50 mb-5" />
-                        <p className="text-lg opacity-50 font-semibold">ユーザーをフォローしましょう</p>
-                    </div>
+                <div className="flex flex-col items-center justify-center text-center">
+                    <img src="/m/cb-none.png" className="w-64" />
+                    <p className="text-xl opacity-50 font-bold">ユーザーをフォローしましょう</p>
+                    <Button type="dashed" className="mt-5">
+                        <Link href="/search">
+                            ユーザーを検索
+                        </Link>
+                    </Button>
+                </div>
                 )}
-            </Layout>
-        </div>
+        </Body>
     );
 };
 
