@@ -164,9 +164,9 @@ const Search = () => {
                     {searchQuery && (
                         <>
                             {displayedMemos.length === 0 && !loading && searchQuery && <Empty description="記事が見つかりませんでした。" />}
-                            {displayedMemos.map((memo) => {
+                            {displayedMemos.map((memo, index) => {
                                 return (
-                                    <div className="flex">
+                                    <div className="flex" key={index}>
                                         <Link href={`/article?id=${memo.id}`} className="select-none mr-2.5 bg-blue-100 w-20 h-20 rounded-xl flex items-center justify-center text-[32px]">
                                             {getEmojiForTitle(memo.title)}
                                         </Link>
