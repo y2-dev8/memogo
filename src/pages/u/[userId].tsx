@@ -162,7 +162,7 @@ const UserPage = () => {
                     </div>
                 )}
                 <div className="contents lg:flex items-center space-y-5 lg:space-y-0 lg:space-x-5">
-                    <img src={avatarSrc} className="user-circle w-20" />
+                    <img src={avatarSrc} className="w-20 rounded-full" />
                         <div className="w-full flex items-center">
                             <div>
                                 <p className="text-xl font-bold">{user?.displayName}</p>

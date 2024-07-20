@@ -218,7 +218,7 @@ const Editor = () => {
                         </div>
                         <div className="ml-auto hidden md:flex">
                             <Button onClick={saveMemo} className="w-full ml-1.5" type="primary">
-                                {id ? '更新する' : '投稿する'}<FiArrowRight />
+                                保存する<FiArrowRight />
                             </Button>
                         </div>
                     </div>

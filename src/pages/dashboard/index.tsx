@@ -77,7 +77,7 @@ const MyMemosPage = () => {
                     <>
                         <p className="text-[32px] font-bold border-b">記事の管理</p>
                         <div className="flex flex-col items-center justify-center text-center">
-                            <img src="/m/book.png" className="w-64" />
+                            <img src="/m/open-book.png" className="w-64" />
                             <p className="text-xl opacity-50 font-semibold">最初の記事を作成しましょう</p>
                             <Button type="primary" className="mt-5">
                                 <Link href="/editor">
@@ -90,10 +90,14 @@ const MyMemosPage = () => {
                     <>
                         <div className="flex items-center mb-2.5">
                             <p className="text-[32px] font-bold">記事の管理</p>
-                            <Button type="dashed" className="ml-auto">新しく作成</Button>
+                            <Button type="dashed" className="ml-auto" icon={<FiPlus />}>
+                                <Link href="/editor">
+                                    新しく作成
+                                </Link>
+                            </Button>
                         </div>
                         <Input
-                            placeholder='投稿した記事を検索'
+                            placeholder='キーワードを入力'
                             className="mb-5"
                             value={searchQuery}
                             onChange={handleSearch}

@@ -34,6 +34,30 @@ const extractImageUrlFromMarkdown = (markdown: string) => {
     return match ? match[1] : null;
 };
 
+const getEmojiForTitle = (title: string) => {
+    const length = title.length;
+    if (length <= 5) return '😃';
+    if (length <= 10) return '😄';
+    if (length <= 15) return '😁';
+    if (length <= 20) return '😊';
+    if (length <= 25) return '😇';
+    if (length <= 30) return '😉';
+    if (length <= 35) return '😍';
+    if (length <= 40) return '😘';
+    if (length <= 45) return '😗';
+    if (length <= 50) return '🤗';
+    if (length <= 55) return '🤔';
+    if (length <= 60) return '😐';
+    if (length <= 65) return '😑';
+    if (length <= 70) return '😶';
+    if (length <= 75) return '😏';
+    if (length <= 80) return '😒';
+    if (length <= 85) return '😞';
+    if (length <= 90) return '😔';
+    if (length <= 95) return '😕';
+    return '😢';
+};
+
 const Search = () => {
     const [memos, setMemos] = useState<Memo[]>([]);
     const [users, setUsers] = useState<User[]>([]);
@@ -136,29 +160,34 @@ const Search = () => {
             key: 'articles',
             label: '記事',
             children: (
-                <>
+                <div className="space-y-5">
                     {searchQuery && (
                         <>
                             {displayedMemos.length === 0 && !loading && searchQuery && <Empty description="記事が見つかりませんでした。" />}
                             {displayedMemos.map((memo) => {
-                                const imageUrl = extractImageUrlFromMarkdown(memo.content);
                                 return (
-                                    <Link href={`/article?id=${memo.id}`} key={memo.id}>
-                                        <Card title={memo.title} key={memo.id}>
-                                            <div className="flex items-center">
-                                                <Link href={`/u/${memo.userID}`} className="flex items-center mr-2.5">
+                                    <div className="flex">
+                                        <Link href={`/article?id=${memo.id}`} className="select-none mr-2.5 bg-blue-100 w-20 h-20 rounded-xl flex items-center justify-center text-[32px]">
+                                            {getEmojiForTitle(memo.title)}
+                                        </Link>
+                                        <div>
+                                            <Link href={`/article?id=${memo.id}`}>
+                                                <p className="text-lg font-semibold text-black hover:text-black">{memo.title}</p>
+                                            </Link>
+                                            <div className="flex mt-1.5 space-x-[10px] items-center">
+                                                <Link href={`/u/${memo.userID}`} className="flex items-center">
                                                     <Avatar src={memo.photoURL} size="default" />
-                                                    <p className="text-blue-500 ml-1.5">@{memo.userID}</p>
+                                                    <p className="text-xs ml-[5px] text-black hover:text-black">{memo.displayName}</p>
                                                 </Link>
-                                                <p className="text-gray-500 text-xs">{formatDate(memo.createdAt)}</p>
+                                                <p className="text-xs">{formatDate(memo.createdAt)}</p>
                                             </div>
-                                        </Card>
-                                    </Link>
+                                        </div>
+                                    </div>
                                 );
                             })}
                         </>
                     )}
-                </>
+                </div>
             ),
         },
         {
