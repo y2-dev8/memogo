@@ -67,7 +67,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, users, userIDs, scr
                                 {msg.sender !== auth.currentUser?.uid && (
                                     <Link href={`/u/${userIDs[msg.sender]}`}>
                                         <Avatar
-                                            src={user?.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${user?.displayName.length}`}
+                                            src={user?.photoURL || `https://api.dicebear.com/9.x/dylan/svg?seed=${user?.displayName.length}`}
                                             name={user?.displayName}
                                             size="sm"
                                             className="mr-1.5 select-none"

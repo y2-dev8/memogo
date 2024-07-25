@@ -277,7 +277,7 @@ const Settings = () => {
 
     if (loading) return <div className="w-full min-h-screen flex justify-center items-center"><Spin size="large" /></div>;
 
-    const avatarSrc = photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${displayName.length}`;
+    const avatarSrc = photoURL || `https://api.dicebear.com/9.x/dylan/svg?seed=${displayName.length}`;
 
     const uploadHeaderProps: UploadProps = {
         beforeUpload: (file: File) => {

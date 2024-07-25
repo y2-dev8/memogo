@@ -151,7 +151,7 @@ const UserPage = () => {
 
     if (loading) return <div className="w-full min-h-screen flex justify-center items-center h-screen"><Spin size="large" /></div>;
 
-    const avatarSrc = user?.photoURL || `https://api.dicebear.com/9.x/thumbs/svg?seed=${user?.displayName.length}`;
+    const avatarSrc = user?.photoURL || `https://api.dicebear.com/9.x/dylan/svg?seed=${user?.displayName.length}`;
 
     return (
         <Body>
